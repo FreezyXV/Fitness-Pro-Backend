@@ -51,31 +51,23 @@ RUN composer install --no-dev --optimize-autoloader --no-scripts --no-interactio
 # Copy application code
 COPY . .
 
-# Set proper permissions
-RUN chown -R www-data:www-data /var/www \
+# Create directories and set permissions
+RUN mkdir -p bootstrap/cache \
+    && mkdir -p storage/app/public \
+    && mkdir -p storage/framework/{cache,sessions,views} \
+    && mkdir -p storage/logs \
+    && chown -R www-data:www-data /var/www \
     && chmod -R 755 /var/www/storage \
     && chmod -R 755 /var/www/bootstrap/cache
 
 # Generate optimized autoloader
 RUN composer dump-autoload --optimize
 
-# Create any missing directories and set permissions
-RUN mkdir -p bootstrap/cache \
-    && mkdir -p storage/app/public \
-    && mkdir -p storage/framework/{cache,sessions,views} \
-    && mkdir -p storage/logs
-
-# Clear any existing cache and optimize
+# Clear cache
 RUN php artisan config:clear || true
-RUN php artisan route:clear || true
-RUN php artisan view:clear || true
-
-# Health check using the actual health endpoint from your API
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD curl -f http://localhost:8000/api/health || exit 1
 
 # Expose port
 EXPOSE 8000
 
-# Start PHP built-in server with optimized settings
-CMD php artisan serve --host=0.0.0.0 --port=8000 --env=production
+# Start server
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]

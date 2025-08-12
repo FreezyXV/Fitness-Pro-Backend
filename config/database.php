@@ -1,6 +1,5 @@
 <?php
 //config/database.php
-<?php
 use Illuminate\Support\Str;
 
 return [
