@@ -2,7 +2,11 @@ app = "fitness-pro"
 primary_region = "ord"
 
 [build]
-  buildpacks = ["heroku/php"]
+  builder = "flyio/laravel"  # Builder spécifique pour Laravel
+  args = {
+    NODE_VERSION = "18"      # Version de Node.js
+    PHP_VERSION = "8.2"      # Version de PHP
+  }
 
 [env]
   APP_ENV = "production"
@@ -34,9 +38,6 @@ primary_region = "ord"
   
   # CORS
   CORS_ALLOWED_ORIGINS = "https://your-frontend-app.vercel.app"
-  
-  # PHP Configuration
-  PHP_VERSION = "8.2"
 
 [http_service]
   internal_port = 8080
