@@ -1,73 +1,42 @@
-FROM php:8.2-fpm-alpine
+FROM php:8.2-apache
 
-# Install system dependencies
-RUN apk add --no-cache \
-    git \
-    curl \
-    libpng-dev \
-    libxml2-dev \
+# Install system dependencies and PHP extensions in one layer
+RUN apt-get update && apt-get install -y \
+    libpq-dev \
+    libzip-dev \
     zip \
     unzip \
-    oniguruma-dev \
-    libzip-dev \
-    postgresql-dev \
-    freetype-dev \
-    libjpeg-turbo-dev \
-    libwebp-dev \
-    gmp-dev \
-    icu-dev
-
-# Configure and install PHP extensions
-RUN docker-php-ext-configure gd \
-    --with-freetype \
-    --with-jpeg \
-    --with-webp
-
-RUN docker-php-ext-install \
-    pdo \
-    pdo_pgsql \
-    mbstring \
-    exif \
-    pcntl \
-    bcmath \
-    gd \
-    zip \
-    xml \
-    intl \
-    gmp
+    git \
+    curl \
+    && docker-php-ext-install pdo pdo_pgsql zip \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+# Enable Apache mod_rewrite
+RUN a2enmod rewrite
+
 # Set working directory
-WORKDIR /var/www
+WORKDIR /var/www/html
 
-# Copy composer files first for better caching
+# Copy composer files and install dependencies
 COPY composer.json composer.lock ./
-
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader --no-scripts --no-interaction
+RUN COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --no-scripts --optimize-autoloader
 
 # Copy application code
 COPY . .
 
-# Create directories and set permissions
-RUN mkdir -p bootstrap/cache \
-    && mkdir -p storage/app/public \
-    && mkdir -p storage/framework/{cache,sessions,views} \
-    && mkdir -p storage/logs \
-    && chown -R www-data:www-data /var/www \
-    && chmod -R 755 /var/www/storage \
-    && chmod -R 755 /var/www/bootstrap/cache
+# Set permissions and create directories
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 storage bootstrap/cache \
+    && mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views
 
-# Generate optimized autoloader
-RUN composer dump-autoload --optimize
+# Configure Apache
+ENV APACHE_DOCUMENT_ROOT /var/www/html/public
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
+RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# Clear cache
-RUN php artisan config:clear || true
-
-# Expose port
-EXPOSE 8000
-
-# Start server
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+EXPOSE 80
+CMD ["apache2-foreground"]
