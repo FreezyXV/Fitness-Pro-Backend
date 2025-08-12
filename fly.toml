@@ -1,53 +1,21 @@
-# App configuration
 app = "fitness-pro"
 primary_region = "ord"
 
-# Build configuration
 [build]
 
-# Environment variables (non-sensitive)
 [env]
   APP_ENV = "production"
   APP_DEBUG = "false"
-  APP_TIMEZONE = "UTC"
   LOG_CHANNEL = "stderr"
-  LOG_LEVEL = "info"
   CACHE_DRIVER = "database"
-  FILESYSTEM_DISK = "local"
-  QUEUE_CONNECTION = "sync"
   SESSION_DRIVER = "database"
-  SESSION_LIFETIME = "120"
-  SESSION_SECURE_COOKIE = "true"
-  BCRYPT_ROUNDS = "12"
-  HASH_VERIFY = "true"
-  IMAGE_DRIVER = "gd"
-  IMAGE_QUALITY = "85"
-  IMAGE_MAX_WIDTH = "1920"
-  IMAGE_MAX_HEIGHT = "1920"
-  UPLOAD_MAX_FILESIZE = "10M"
-  POST_MAX_SIZE = "10M"
-  RATE_LIMIT_LOGIN = "5"
-  RATE_LIMIT_REGISTER = "3"
-  RATE_LIMIT_API = "60"
-  ANALYTICS_ENABLED = "false"
-  MONITORING_ENABLED = "false"
-  SANCTUM_EXPIRATION = "1440"
-  SANCTUM_TOKEN_PREFIX = ""
 
-# HTTP service configuration
 [http_service]
-  internal_port = 8000
+  internal_port = 80
   force_https = true
   auto_stop_machines = true
   auto_start_machines = true
   min_machines_running = 0
 
-# Deployment configuration
 [deploy]
   release_command = "php artisan migrate --force"
-
-# Volume mounts for persistent storage
-[[mounts]]
-  source = "fitness_pro_storage"
-  destination = "/var/www/storage"
-  initial_size = "1gb"
