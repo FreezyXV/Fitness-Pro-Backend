@@ -1,19 +1,19 @@
-app = "fitness-pro"
+app = "fitness-pro-backend"
 primary_region = "ord"
 
 [build]
-  builder = "flyio/laravel"  # Builder spécifique pour Laravel
-  args = {
-    NODE_VERSION = "18"      # Version de Node.js
-    PHP_VERSION = "8.2"      # Version de PHP
-  }
+  dockerfile = "Dockerfile"
+  [build.args]
+    NODE_VERSION = "18"
+    PHP_VERSION = "8.2"
 
 [env]
   APP_ENV = "production"
   APP_DEBUG = "false"
   APP_NAME = "FitnessPro"
   APP_KEY = "base64:zxAlMGWMB/PxVDEsHkZCbGyV2XxZ48VKazys5jtFvfI="
-  APP_URL = "https://your-domain.com"
+  APP_URL = "https://fitness-pro-backend.fly.dev"
+  APP_FORCE_HTTPS = "true"
   LOG_CHANNEL = "stderr"
   LOG_LEVEL = "info"
   CACHE_DRIVER = "redis"
@@ -23,21 +23,25 @@ primary_region = "ord"
   
   # Database
   DB_CONNECTION = "pgsql"
-  DB_HOST = "127.0.0.1"
+  DB_HOST = "fitness-pro-db.internal"
   DB_PORT = "5432"
   DB_DATABASE = "fitness_pro"
   DB_USERNAME = "postgres"
-  DB_PASSWORD = "your-secure-password"
+  DB_PASSWORD = "5203"
   
   # Redis
-  REDIS_HOST = "127.0.0.1"
+  REDIS_HOST = "fitness-pro-redis.internal"
   REDIS_PORT = "6379"
   
   # Sanctum
-  SANCTUM_STATEFUL_DOMAINS = "your-frontend-app.vercel.app"
+  SANCTUM_STATEFUL_DOMAINS = "fitness-pro-frontend.vercel.app"
   
   # CORS
-  CORS_ALLOWED_ORIGINS = "https://your-frontend-app.vercel.app"
+  CORS_ALLOWED_ORIGINS = "https://fitness-pro-frontend.vercel.app"
+  CORS_SUPPORTS_CREDENTIALS = "true"
+
+  # Frontend
+  FRONTEND_URL = "https://fitness-pro-frontend.vercel.app"
 
 [http_service]
   internal_port = 8080
@@ -51,11 +55,11 @@ primary_region = "ord"
     interval = "30s"
     method = "GET"
     timeout = "5s"
-    path = "/health"
+    path = "/api/health"
 
 [deploy]
   release_command = "php artisan storage:link && php artisan config:cache && php artisan migrate --force"
 
 [mounts]
   source = "storage_volume"
-  destination = "/app/storage"
+  destination = "/var/www/html/storage"

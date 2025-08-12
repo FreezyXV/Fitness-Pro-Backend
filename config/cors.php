@@ -1,5 +1,5 @@
 <?php
-
+//config/cors.php
 return [
 
     /*
@@ -8,25 +8,22 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie', 'health', 'version'],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [
+'allowed_origins' => [
         'http://localhost:4200',
         'http://127.0.0.1:4200',
         'http://localhost:3000',
         'http://127.0.0.1:3000',
-        env('FRONTEND_URL', 'http://localhost:4200'),
-        // Production frontend URLs - add your actual deployed URLs
-        'https://your-frontend-app.vercel.app', // Update this!
+        env('FRONTEND_URL', 'https://fitness-pro-frontend.vercel.app'),
     ],
 
     'allowed_origins_patterns' => [
-        '#^http://localhost:\d+$#',
-        '#^http://127\.0\.0\.1:\d+$#',
-        '#^https://.*\.vercel\.app$#', // Allow all Vercel apps
-        '#^https://.*\.netlify\.app$#', // Allow Netlify if you use it
+        '#^https://fitness-pro-.*-freezyxv\.vercel\.app$#',
+        '#^https://fitness-pro-frontend\.vercel\.app$#',
+        '#^https://.*\.fly\.dev$#',
     ],
 
     'allowed_headers' => ['*'],

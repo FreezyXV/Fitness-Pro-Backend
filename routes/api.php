@@ -1,5 +1,5 @@
 <?php
-// routes/api.php - FIXED VERSION WITH PROPER CALENDAR ROUTES
+// routes/api.php 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -18,6 +18,19 @@ use App\Http\Controllers\DashboardController;
 
 // =============================================
 // 🔍 HEALTH & TEST ROUTES
+
+Route::get('/health', function () {
+    return response()->json(['status' => 'ok']);
+});
+
+// Ajouter après la route /health
+Route::get('/version', function() {
+    return response()->json([
+        'api' => '2.0.0',
+        'laravel' => app()->version(),
+        'php' => PHP_VERSION
+    ]);
+});
 // =============================================
 Route::get('test', function () {
     return response()->json([
