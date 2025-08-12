@@ -7,13 +7,36 @@ primary_region = "ord"
 [env]
   APP_ENV = "production"
   APP_DEBUG = "false"
+  APP_NAME = "FitnessPro"
+  APP_KEY = "base64:zxAlMGWMB/PxVDEsHkZCbGyV2XxZ48VKazys5jtFvfI="
+  APP_URL = "https://your-domain.com"
   LOG_CHANNEL = "stderr"
   LOG_LEVEL = "info"
-  CACHE_DRIVER = "database"
-  SESSION_DRIVER = "database"
-  QUEUE_CONNECTION = "sync"
-  # Forcer l'utilisation du port 8080 pour Apache
-  PORT = "8080"
+  CACHE_DRIVER = "redis"
+  SESSION_DRIVER = "redis"
+  QUEUE_CONNECTION = "redis"
+  FILESYSTEM_DISK = "local"
+  
+  # Database
+  DB_CONNECTION = "pgsql"
+  DB_HOST = "127.0.0.1"
+  DB_PORT = "5432"
+  DB_DATABASE = "fitness_pro"
+  DB_USERNAME = "postgres"
+  DB_PASSWORD = "your-secure-password"
+  
+  # Redis
+  REDIS_HOST = "127.0.0.1"
+  REDIS_PORT = "6379"
+  
+  # Sanctum
+  SANCTUM_STATEFUL_DOMAINS = "your-frontend-app.vercel.app"
+  
+  # CORS
+  CORS_ALLOWED_ORIGINS = "https://your-frontend-app.vercel.app"
+  
+  # PHP Configuration
+  PHP_VERSION = "8.2"
 
 [http_service]
   internal_port = 8080
@@ -30,7 +53,7 @@ primary_region = "ord"
     path = "/health"
 
 [deploy]
-  release_command = "php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan migrate --force"
+  release_command = "php artisan storage:link && php artisan config:cache && php artisan migrate --force"
 
 [mounts]
   source = "storage_volume"

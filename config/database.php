@@ -1,5 +1,6 @@
 <?php
-
+//config/database.php
+use Illuminate\Support\Str; // Ajoutez cette ligne
 return [
 
     /*
