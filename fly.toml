@@ -2,6 +2,7 @@ app = "fitness-pro"
 primary_region = "ord"
 
 [build]
+  buildpacks = ["heroku/php"]
 
 [env]
   APP_ENV = "production"
@@ -11,7 +12,7 @@ primary_region = "ord"
   SESSION_DRIVER = "database"
 
 [http_service]
-  internal_port = 80
+  internal_port = 8080
   force_https = true
   auto_stop_machines = true
   auto_start_machines = true
