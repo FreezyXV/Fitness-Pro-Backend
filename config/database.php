@@ -88,8 +88,6 @@ return [
     'options' => extension_loaded('pdo_pgsql') ? array_filter([
         PDO::ATTR_TIMEOUT => 30,
         PDO::ATTR_PERSISTENT => true,
-        PDO::ATTR_PERSISTENT => true,
-        PDO::PGSQL_ATTR_SSL_MODE => PDO::PGSQL_SSL_REQUIRE,
     ]) : [],
 ],
 

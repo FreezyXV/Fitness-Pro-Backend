@@ -2,7 +2,7 @@ app = "fitness-pro-backend"
 primary_region = "ord"
 
 [build]
-  dockerfile = "Dockerfile"
+  dockerfile = "../Dockerfile"
   [build.args]
     NODE_VERSION = "18"
     PHP_VERSION = "8.2"
