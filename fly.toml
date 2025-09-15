@@ -1,9 +1,12 @@
-# fly.toml app configuration file generated for fitness-backend
+# fly.toml app configuration file for Laravel fitness backend
 app = "fitness-pro-backend"
 primary_region = "cdg"
 
 [build]
   dockerfile = "Dockerfile.prod"
+
+[deploy]
+  release_command = "php artisan migrate --force"
 
 [env]
   APP_ENV = "production"
