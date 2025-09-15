@@ -1,6 +1,10 @@
 app = "fitness-backend-api-v2"
 primary_region = "cdg"
 
+[build]
+  dockerfile = "Dockerfile"
+  buildpacks = []
+
 [env]
   APP_ENV = "production"
   LOG_CHANNEL = "stderr"
