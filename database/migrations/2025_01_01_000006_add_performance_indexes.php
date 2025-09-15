@@ -14,65 +14,79 @@ return new class extends Migration
     public function up(): void
     {
         // User-related indexes
-        Schema::table('users', function (Blueprint $table) {
-            $table->index(['email', 'email_verified_at'], 'users_email_verified_idx');
-            $table->index('activity_level', 'users_activity_level_idx');
-            $table->index('created_at', 'users_created_at_idx');
-        });
+        if (Schema::hasTable('users')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->index(['email', 'email_verified_at'], 'users_email_verified_idx');
+                $table->index('activity_level', 'users_activity_level_idx');
+                $table->index('created_at', 'users_created_at_idx');
+            });
+        }
 
         // Workout indexes for frequent queries
-        Schema::table('workouts', function (Blueprint $table) {
-            $table->index(['user_id', 'is_template'], 'workouts_user_template_idx');
-            $table->index(['is_template', 'category'], 'workouts_template_category_idx');
-            $table->index(['is_template', 'difficulty_level'], 'workouts_template_difficulty_idx');
-            $table->index(['user_id', 'status', 'completed_at'], 'workouts_user_status_completed_idx');
-            $table->index(['status', 'completed_at'], 'workouts_status_completed_idx');
-            $table->index(['is_public', 'is_template'], 'workouts_public_template_idx');
-            $table->index('created_at', 'workouts_created_at_idx');
-        });
+        if (Schema::hasTable('workouts')) {
+            Schema::table('workouts', function (Blueprint $table) {
+                $table->index(['user_id', 'is_template'], 'workouts_user_template_idx');
+                $table->index(['is_template', 'category'], 'workouts_template_category_idx');
+                $table->index(['is_template', 'difficulty_level'], 'workouts_template_difficulty_idx');
+                $table->index(['user_id', 'status', 'completed_at'], 'workouts_user_status_completed_idx');
+                $table->index(['status', 'completed_at'], 'workouts_status_completed_idx');
+                $table->index(['is_public', 'is_template'], 'workouts_public_template_idx');
+                $table->index('created_at', 'workouts_created_at_idx');
+            });
+        }
 
         // Workout exercises pivot table indexes
-        Schema::table('workout_exercises', function (Blueprint $table) {
-            $table->index(['workout_id', 'order_index'], 'workout_exercises_workout_order_idx');
-            $table->index(['exercise_id', 'workout_id'], 'workout_exercises_exercise_workout_idx');
-            $table->index(['workout_id', 'is_completed'], 'workout_exercises_workout_completed_idx');
-        });
+        if (Schema::hasTable('workout_exercises')) {
+            Schema::table('workout_exercises', function (Blueprint $table) {
+                $table->index(['workout_id', 'order_index'], 'workout_exercises_workout_order_idx');
+                $table->index(['exercise_id', 'workout_id'], 'workout_exercises_exercise_workout_idx');
+                $table->index(['workout_id', 'is_completed'], 'workout_exercises_workout_completed_idx');
+            });
+        }
 
         // Exercise indexes
-        Schema::table('exercises', function (Blueprint $table) {
-            $table->index('category', 'exercises_category_idx');
-            $table->index(['category', 'body_part'], 'exercises_category_bodypart_idx');
-            $table->index('difficulty_level', 'exercises_difficulty_idx');
-            $table->index(['is_public', 'category'], 'exercises_public_category_idx');
+        if (Schema::hasTable('exercises')) {
+            Schema::table('exercises', function (Blueprint $table) {
+                $table->index('category', 'exercises_category_idx');
+                $table->index(['category', 'body_part'], 'exercises_category_bodypart_idx');
+                $table->index('difficulty_level', 'exercises_difficulty_idx');
+                $table->index(['is_public', 'category'], 'exercises_public_category_idx');
 
-            // Only create fulltext index for MySQL/PostgreSQL, not SQLite
-            if (config('database.default') !== 'sqlite') {
-                $table->fullText(['name', 'description'], 'exercises_search_idx');
-            }
-        });
+                // Only create fulltext index for MySQL/PostgreSQL, not SQLite
+                if (config('database.default') !== 'sqlite') {
+                    $table->fullText(['name', 'description'], 'exercises_search_idx');
+                }
+            });
+        }
 
         // Goals indexes
-        Schema::table('goals', function (Blueprint $table) {
-            $table->index(['user_id', 'status'], 'goals_user_status_idx');
-            $table->index(['user_id', 'type'], 'goals_user_type_idx');
-            $table->index(['status', 'deadline'], 'goals_status_deadline_idx');
-            $table->index('created_at', 'goals_created_at_idx');
-        });
+        if (Schema::hasTable('goals')) {
+            Schema::table('goals', function (Blueprint $table) {
+                $table->index(['user_id', 'status'], 'goals_user_status_idx');
+                $table->index(['user_id', 'type'], 'goals_user_type_idx');
+                $table->index(['status', 'deadline'], 'goals_status_deadline_idx');
+                $table->index('created_at', 'goals_created_at_idx');
+            });
+        }
 
-        // Calendar tasks indexes
-        Schema::table('calendar_tasks', function (Blueprint $table) {
-            $table->index(['user_id', 'date'], 'calendar_tasks_user_date_idx');
-            $table->index(['user_id', 'type'], 'calendar_tasks_user_type_idx');
-            $table->index(['user_id', 'is_completed'], 'calendar_tasks_user_completed_idx');
-            $table->index(['date', 'type'], 'calendar_tasks_date_type_idx');
-        });
+        // Calendar tasks indexes (only if table exists)
+        if (Schema::hasTable('calendar_tasks')) {
+            Schema::table('calendar_tasks', function (Blueprint $table) {
+                $table->index(['user_id', 'date'], 'calendar_tasks_user_date_idx');
+                $table->index(['user_id', 'type'], 'calendar_tasks_user_type_idx');
+                $table->index(['user_id', 'is_completed'], 'calendar_tasks_user_completed_idx');
+                $table->index(['date', 'type'], 'calendar_tasks_date_type_idx');
+            });
+        }
 
-        // User exercise progress indexes
-        Schema::table('user_exercise_progress', function (Blueprint $table) {
-            $table->index(['user_id', 'exercise_id'], 'user_exercise_progress_user_exercise_idx');
-            $table->index(['user_id', 'recorded_at'], 'user_exercise_progress_user_date_idx');
-            $table->index(['exercise_id', 'recorded_at'], 'user_exercise_progress_exercise_date_idx');
-        });
+        // User exercise progress indexes (only if table exists)
+        if (Schema::hasTable('user_exercise_progress')) {
+            Schema::table('user_exercise_progress', function (Blueprint $table) {
+                $table->index(['user_id', 'exercise_id'], 'user_exercise_progress_user_exercise_idx');
+                $table->index(['user_id', 'recorded_at'], 'user_exercise_progress_user_date_idx');
+                $table->index(['exercise_id', 'recorded_at'], 'user_exercise_progress_exercise_date_idx');
+            });
+        }
 
         // Nutrition-related indexes
         if (Schema::hasTable('meal_entries')) {
