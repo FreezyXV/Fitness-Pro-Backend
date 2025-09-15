@@ -88,10 +88,8 @@ RUN if [ ! -f .env ]; then cp .env.example .env; fi \
     && sed -i 's/QUEUE_CONNECTION=database/QUEUE_CONNECTION=database/' .env \
     && php artisan key:generate --no-interaction
 
-# Create SQLite database file, generate migration tables and run migrations
+# Create SQLite database file and run migrations
 RUN touch database/database.sqlite \
-    && php artisan cache:table \
-    && php artisan queue:table \
     && php artisan migrate --force
 
 # Optimize Laravel (skip config:cache as it requires DB connection)
