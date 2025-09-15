@@ -59,16 +59,16 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --no-script
 # Copy application files
 COPY . .
 
-# Run Laravel post-autoload scripts now that all files are present
-RUN composer run-script post-autoload-dump
-
-# Create storage and cache directories if they don't exist
+# Create storage and cache directories first
 RUN mkdir -p storage/app/public \
     storage/framework/cache \
     storage/framework/sessions \
     storage/framework/views \
     storage/logs \
     bootstrap/cache
+
+# Run Laravel post-autoload scripts now that all files and directories are present
+RUN composer run-script post-autoload-dump
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html \
