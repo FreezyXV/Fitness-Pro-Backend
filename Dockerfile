@@ -48,7 +48,11 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 # Copy composer files first
 COPY composer.json composer.lock ./
 
-# Install PHP dependencies first
+# Copy artisan file (renamed from artisan_cli) for composer scripts
+COPY artisan_cli ./artisan
+RUN chmod +x artisan
+
+# Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 # Copy application files
@@ -72,9 +76,6 @@ RUN chown -R www-data:www-data /var/www/html \
 COPY docker/nginx.conf /etc/nginx/nginx.conf
 COPY docker/php.ini /usr/local/etc/php/conf.d/99-custom.ini
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
-# Restore artisan command
-RUN if [ -f artisan_cli ]; then mv artisan_cli artisan && chmod +x artisan; fi
 
 # Generate application key if .env doesn't exist
 RUN if [ ! -f .env ]; then cp .env.example .env; fi \
