@@ -70,7 +70,6 @@ Vagrantfile
 # Composer
 /vendor/
 composer.phar
-composer.lock
 auth.json
 
 # Node.js & NPM
