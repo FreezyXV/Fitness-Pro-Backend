@@ -14,9 +14,6 @@ kill_timeout = "5s"
   guest_path = "/app/public"
   url_prefix = "/static/"
 
-[deploy]
-  strategy = "immediate"
-
 [env]
   APP_ENV = "production"
   APP_DEBUG = "false"
