@@ -1,13 +1,9 @@
-app = "fitness-pro-backend"
+app = "fitness-backend-api-v2"
 primary_region = "cdg"
-
-[build]
-  dockerfile = "Dockerfile"
 
 [env]
   APP_ENV = "production"
   LOG_CHANNEL = "stderr"
-  LOG_LEVEL = "info"
   SESSION_DRIVER = "database"
   CACHE_DRIVER = "database"
 
