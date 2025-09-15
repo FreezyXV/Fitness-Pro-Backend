@@ -52,11 +52,15 @@ COPY composer.json composer.lock ./
 COPY artisan_cli ./artisan
 RUN chmod +x artisan
 
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+# Install PHP dependencies (skip Laravel post-autoload scripts for now)
+ENV COMPOSER_ALLOW_SUPERUSER=1
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
 # Copy application files
 COPY . .
+
+# Run Laravel post-autoload scripts now that all files are present
+RUN composer run-script post-autoload-dump
 
 # Create storage and cache directories if they don't exist
 RUN mkdir -p storage/app/public \
