@@ -2,8 +2,8 @@
 app = "fitness-pro-backend"
 primary_region = "cdg"
 
-[build]
-  dockerfile = "Dockerfile.prod"
+[experimental]
+  auto_rollback = true
 
 [deploy]
   release_command = "php artisan migrate --force"
