@@ -6,10 +6,6 @@ kill_timeout = "5s"
 [experimental]
   auto_rollback = true
 
-[build]
-  dockerfile = "Dockerfile"
-  ignorefile = ".dockerignore"
-
 [[statics]]
   guest_path = "/app/public"
   url_prefix = "/static/"

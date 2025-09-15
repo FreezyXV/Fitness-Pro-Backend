@@ -348,6 +348,8 @@ local-scripts/
 .fly/*
 !.fly/app_type
 !.fly/build_strategy
+!.fly/manifest.json
+!.fly/force_dockerfile
 fly.toml.bak
 
 # Project Documentation (if sensitive)
