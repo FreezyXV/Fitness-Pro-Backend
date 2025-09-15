@@ -1,0 +1,991 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\Workout;
+use App\Services\WorkoutService;
+use App\Services\StatisticsService;
+use App\Services\CacheService;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Log;
+
+class WorkoutController extends BaseController
+{
+    protected WorkoutService $workoutService;
+    protected StatisticsService $statisticsService;
+    protected CacheService $cacheService;
+
+    public function __construct(
+        WorkoutService $workoutService,
+        StatisticsService $statisticsService,
+        CacheService $cacheService
+    ) {
+        $this->workoutService = $workoutService;
+        $this->statisticsService = $statisticsService;
+        $this->cacheService = $cacheService;
+    }
+
+    // =============================================
+    // WORKOUT TEMPLATES MANAGEMENT - ENHANCED
+    // =============================================
+
+    public function getTemplates(Request $request)
+    {
+        return $this->execute(function () use ($request) {
+            $user = $this->getAuthenticatedUser();
+            $filters = $request->only(['category', 'difficulty', 'search']);
+
+            Log::info('Getting workout templates for user: ' . $user->id, [
+                'filters' => $filters
+            ]);
+
+            $templates = $this->cacheService->getWorkoutTemplates($user->id, $filters, function() use ($user, $request) {
+                try {
+                    $query = Workout::where('is_template', true)
+                                  ->where(function($q) use ($user) {
+                                      // Show user's own templates OR public templates (user_id = 1 acts as system templates)
+                                      $q->where('user_id', $user->id)
+                                        ->orWhere('user_id', config('app.system_user_id')); // Include system templates
+                                  })
+                                  ->select([
+                                      'id', 'name', 'description', 'category', 'difficulty_level',
+                                      'duration_minutes', 'calories_burned', 'user_id', 'is_template',
+                                      'is_public', 'created_at', 'updated_at'
+                                  ])
+                                  ->with([
+                                      'user:id,name,first_name' // Only eager load user data, not exercises for list view
+                                  ])
+                                  ->withCount('exercises'); // Get exercise count efficiently
+
+                    // Apply filters
+                    if ($request->has('category') && $request->get('category') !== 'all') {
+                        $query->where('category', $request->get('category'));
+                    }
+
+                    if ($request->has('difficulty') && $request->get('difficulty') !== 'all') {
+                        $query->where('difficulty_level', $request->get('difficulty'));
+                    }
+
+                    if ($request->has('search') && !empty($request->get('search'))) {
+                        $search = $request->get('search');
+                        $query->where(function($q) use ($search) {
+                            $q->where('name', 'like', "%{$search}%")
+                              ->orWhere('description', 'like', "%{$search}%");
+                        });
+                    }
+
+                    $templates = $query->orderBy('created_at', 'desc')->get();
+
+                    Log::info('Found ' . $templates->count() . ' workout templates', [
+                        'template_names' => $templates->pluck('name')->toArray(),
+                        'has_exercises' => $templates->map(function($t) {
+                            return [
+                                'name' => $t->name,
+                                'exercise_count' => $t->exercises_count ?? 0
+                            ];
+                        })->toArray()
+                    ]);
+
+                    // Convert to array with proper exercise formatting
+                    return $templates->map(function ($template) {
+                        $templateArray = $template->toArray();
+                        // Use the efficient exercises_count instead of loading all exercises
+                        $templateArray['exercise_count'] = $template->exercises_count ?? 0;
+                        return $templateArray;
+                    })->toArray();
+
+                } catch (\Exception $e) {
+                    Log::error('Error getting workout templates', [
+                        'user_id' => $user->id,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+
+                    // Return empty array instead of failing
+                    return [];
+                }
+            });
+
+            return $this->successResponse($templates, 'Workout templates retrieved successfully');
+        }, 'Get workout templates');
+    }
+
+    public function getCurrentTemplate()
+    {
+        return $this->execute(function () {
+            $user = $this->getAuthenticatedUser();
+            
+            Log::info('Getting current template for user: ' . $user->id);
+            
+            try {
+                $currentTemplate = Workout::where('is_template', true)
+                                        ->where('user_id', $user->id)
+                                        ->with(['exercises' => function($exerciseQuery) {
+                                            $exerciseQuery->orderBy('workout_exercises.order_index', 'asc');
+                                        }])
+                                        ->orderBy('created_at', 'desc')
+                                        ->first();
+
+                if (!$currentTemplate) {
+                    Log::info('No current template found, user might not have any templates yet', ['user_id' => $user->id]);
+                    
+                    return $this->successResponse(null, 'No current workout template found');
+                }
+
+                return $this->successResponse($currentTemplate->toArray(), 'Current workout template retrieved successfully');
+
+            } catch (\Exception $e) {
+                Log::error('Error getting current template', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage()
+                ]);
+                
+                return $this->successResponse(null, 'No current workout template found');
+            }
+
+        }, 'Get current workout template');
+    }
+
+    public function showTemplate($id)
+    {
+        return $this->execute(function () use ($id) {
+            $user = $this->getAuthenticatedUser();
+
+            try {
+                $template = Workout::where('is_template', true)
+                                 ->where(function($q) use ($user) {
+                                     $q->where('user_id', $user->id)
+                                       ->orWhere('is_public', true);
+                                 })
+                                 ->with([
+                                     'exercises' => function($exerciseQuery) {
+                                         $exerciseQuery->orderBy('workout_exercises.order_index', 'asc');
+                                     },
+                                     'user:id,name,weight' // Include user for calorie calculations
+                                 ])
+                                 ->findOrFail($id);
+
+                Log::info('Template retrieved successfully', [
+                    'template_id' => $id,
+                    'template_name' => $template->name,
+                    'exercise_count' => $template->exercises->count(),
+                    'estimated_duration' => $template->estimated_duration,
+                    'estimated_calories' => $template->estimated_calories
+                ]);
+
+                return $this->successResponse($template->toArray(), 'Workout template retrieved successfully');
+
+            } catch (\Exception $e) {
+                Log::error('Error showing template', [
+                    'template_id' => $id,
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage()
+                ]);
+
+                return $this->notFoundResponse('Workout template not found');
+            }
+        }, 'Show workout template');
+    }
+
+    // =============================================
+    // DEBUG METHOD - Enhanced for Better Debugging
+    // =============================================
+
+    public function debugTemplates(Request $request)
+    {
+        if (!config('app.debug')) {
+            return response()->json(['error' => 'Debug mode disabled'], 403);
+        }
+
+        try {
+            $user = $this->getAuthenticatedUser();
+            
+            // Get all workouts for this user
+            $allWorkouts = Workout::where('user_id', $user->id)->get();
+            $templates = Workout::where('is_template', true)->where('user_id', $user->id)->with('exercises')->get();
+            $sessions = Workout::where('is_template', false)->where('user_id', $user->id)->get();
+            
+            // Check exercise counts
+            $exercises = \App\Models\Exercise::count();
+            
+            // Get other users' templates for comparison
+            $otherUsersTemplates = Workout::where('is_template', true)
+                                        ->where('user_id', '!=', $user->id)
+                                        ->take(5)
+                                        ->get();
+            
+            $debugInfo = [
+                'user_info' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email
+                ],
+                'database_counts' => [
+                    'total_workouts' => $allWorkouts->count(),
+                    'user_templates' => $templates->count(),
+                    'user_sessions' => $sessions->count(),
+                    'total_exercises' => $exercises,
+                    'other_users_templates' => $otherUsersTemplates->count()
+                ],
+                'user_workouts_summary' => $allWorkouts->map(function($w) {
+                    return [
+                        'id' => $w->id,
+                        'name' => $w->name,
+                        'is_template' => $w->is_template,
+                        'user_id' => $w->user_id,
+                        'category' => $w->category,
+                        'difficulty_level' => $w->difficulty_level,
+                        'exercise_count' => $w->exercises()->count(),
+                        'created_at' => $w->created_at->toISOString()
+                    ];
+                })->toArray(),
+                'templates_detailed' => $templates->map(function($template) {
+                    return [
+                        'id' => $template->id,
+                        'name' => $template->name,
+                        'category' => $template->category,
+                        'difficulty_level' => $template->difficulty_level,
+                        'exercises_count' => $template->exercises->count(),
+                        'exercises_names' => $template->exercises->pluck('name')->toArray(),
+                        'is_public' => $template->is_public,
+                        'duration_minutes' => $template->duration_minutes,
+                        'calories_burned' => $template->calories_burned,
+                        'created_at' => $template->created_at->toISOString()
+                    ];
+                })->toArray(),
+                'other_users_examples' => $otherUsersTemplates->map(function($template) {
+                    return [
+                        'id' => $template->id,
+                        'name' => $template->name,
+                        'user_id' => $template->user_id,
+                        'category' => $template->category,
+                        'difficulty_level' => $template->difficulty_level,
+                        'is_public' => $template->is_public
+                    ];
+                })->toArray(),
+                'sample_api_response' => null
+            ];
+
+            // Generate sample API response if templates exist
+            if ($templates->count() > 0) {
+                $sampleTemplate = $templates->first();
+                $debugInfo['sample_api_response'] = [
+                    'success' => true,
+                    'data' => [$sampleTemplate->toArray()],
+                    'message' => 'Workout templates retrieved successfully'
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'debug_info' => $debugInfo
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Debug failed: ' . $e->getMessage(),
+                'trace' => config('app.debug') ? $e->getTraceAsString() : null
+            ], 500);
+        }
+    }
+
+    // =============================================
+    // ADD METHOD TO FORCE RESEED FOR CURRENT USER
+    // =============================================
+
+    public function reseedUserTemplates(Request $request)
+    {
+        if (!config('app.debug')) {
+            return response()->json(['error' => 'Debug mode disabled'], 403);
+        }
+
+        try {
+            $user = $this->getAuthenticatedUser();
+            
+            // Delete existing templates for this user
+            Workout::where('user_id', $user->id)->where('is_template', true)->delete();
+            
+            // Get some exercises to work with
+            $exercises = \App\Models\Exercise::take(10)->get();
+            
+            if ($exercises->count() === 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No exercises found. Please seed exercises first.'
+                ]);
+            }
+
+            // Create sample templates
+            $templates = [
+                [
+                    'name' => 'Programme Force Débutant',
+                    'description' => 'Un programme de force parfait pour débuter',
+                    'category' => 'strength',
+                    'difficulty_level' => 'beginner',
+                    'duration_minutes' => 45,
+                    'calories_burned' => 200,
+                    'is_public' => false
+                ],
+                [
+                    'name' => 'Cardio HIIT Intense',
+                    'description' => 'Entraînement cardio haute intensité',
+                    'category' => 'hiit',
+                    'difficulty_level' => 'intermediate',
+                    'duration_minutes' => 30,
+                    'calories_burned' => 300,
+                    'is_public' => true
+                ],
+                [
+                    'name' => 'Flexibilité et Mobilité',
+                    'description' => 'Améliorer la flexibilité et la mobilité',
+                    'category' => 'flexibility',
+                    'difficulty_level' => 'beginner',
+                    'duration_minutes' => 25,
+                    'calories_burned' => 100,
+                    'is_public' => false
+                ]
+            ];
+
+            $createdTemplates = [];
+
+            foreach ($templates as $templateData) {
+                $templateData['user_id'] = $user->id;
+                $templateData['is_template'] = true;
+                $templateData['status'] = 'planned';
+                
+                $template = Workout::create($templateData);
+                
+                // Add some exercises to each template
+                $templateExercises = $exercises->random(min(3, $exercises->count()));
+                
+                foreach ($templateExercises as $index => $exercise) {
+                    $template->exercises()->attach($exercise->id, [
+                        'order_index' => $index,
+                        'sets' => rand(2, 4),
+                        'reps' => rand(8, 15),
+                        'rest_time_seconds' => 60,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+                }
+                
+                $createdTemplates[] = $template->load('exercises')->toArray();
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Templates reseeded successfully',
+                'data' => [
+                    'created_count' => count($createdTemplates),
+                    'templates' => $createdTemplates
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Reseed failed: ' . $e->getMessage(),
+                'trace' => config('app.debug') ? $e->getTraceAsString() : null
+            ], 500);
+        }
+    }
+
+    // Rest of the methods remain the same...
+    // (Keep all other methods from your original controller)
+
+    public function createTemplate(Request $request)
+    {
+        return $this->execute(function () use ($request) {
+            $user = $this->getAuthenticatedUser();
+
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'description' => 'nullable|string|max:1000',
+                'exercises' => 'nullable|array',
+                'category' => 'required|string|in:strength,cardio,hiit,flexibility',
+                'difficulty_level' => 'required|string|in:beginner,intermediate,advanced',
+                'is_public' => 'nullable|boolean',
+            ]);
+
+            try {
+                $template = $this->workoutService->createWorkoutTemplate($validated, $user);
+                return $this->createdResponse($template->toArray(), 'Workout template created successfully');
+                
+            } catch (\Exception $e) {
+                Log::error('Error creating template', [
+                    'user_id' => $user->id,
+                    'data' => $validated,
+                    'error' => $e->getMessage()
+                ]);
+                
+                return $this->errorResponse('Failed to create workout template', 500);
+            }
+
+        }, 'Create workout template');
+    }
+
+    public function updateTemplate(Request $request, $id)
+    {
+        return $this->execute(function () use ($request, $id) {
+            $user = $this->getAuthenticatedUser();
+            
+            try {
+                $template = Workout::where('is_template', true)
+                                 ->where('user_id', $user->id)
+                                 ->findOrFail($id);
+
+                $validated = $request->validate([
+                    'name' => 'sometimes|string|max:255',
+                    'description' => 'nullable|string|max:1000',
+                    'exercises' => 'sometimes|array',
+                    'category' => 'sometimes|string|in:strength,cardio,hiit,flexibility',
+                    'difficulty_level' => 'sometimes|string|in:beginner,intermediate,advanced',
+                    'is_public' => 'nullable|boolean',
+                ]);
+
+                $updatedTemplate = $this->workoutService->updateWorkoutTemplate($template, $validated, $user);
+                return $this->successResponse($updatedTemplate->toArray(), 'Workout template updated successfully');
+                
+            } catch (\Exception $e) {
+                Log::error('Error updating template', [
+                    'template_id' => $id,
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage()
+                ]);
+                
+                return $this->errorResponse('Failed to update workout template', 500);
+            }
+
+        }, 'Update workout template');
+    }
+
+    public function deleteTemplate($id)
+    {
+        return $this->execute(function () use ($id) {
+            $user = $this->getAuthenticatedUser();
+            
+            try {
+                $template = Workout::where('is_template', true)
+                                 ->where('user_id', $user->id)
+                                 ->findOrFail($id);
+                                 
+                $template->delete();
+                return $this->successResponse(null, 'Workout template deleted successfully');
+                
+            } catch (\Exception $e) {
+                Log::error('Error deleting template', [
+                    'template_id' => $id,
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage()
+                ]);
+                
+                return $this->errorResponse('Failed to delete workout template', 500);
+            }
+        }, 'Delete workout template');
+    }
+
+    public function duplicateTemplate($id)
+    {
+        return $this->execute(function () use ($id) {
+            $user = $this->getAuthenticatedUser();
+            
+            try {
+                $originalTemplate = Workout::where('is_template', true)
+                                         ->where('user_id', $user->id)
+                                         ->findOrFail($id);
+                                         
+                $duplicatedTemplate = $this->workoutService->cloneTemplate($originalTemplate, $user);
+                return $this->createdResponse($duplicatedTemplate->toArray(), 'Workout template duplicated successfully');
+                
+            } catch (\Exception $e) {
+                Log::error('Error duplicating template', [
+                    'template_id' => $id,
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage()
+                ]);
+                
+                return $this->errorResponse('Failed to duplicate workout template', 500);
+            }
+        }, 'Duplicate workout template');
+    }
+
+    // =============================================
+    // WORKOUT LOGS (SESSIONS) MANAGEMENT
+    // =============================================
+
+    public function getLogs(Request $request)
+    {
+        return $this->execute(function () use ($request) {
+            $user = $this->getAuthenticatedUser();
+            
+            Log::info('Getting workout logs for user: ' . $user->id, [
+                'filters' => $request->all()
+            ]);
+            
+            try {
+                $query = Workout::where('is_template', false)
+                              ->where('user_id', $user->id)
+                              ->with(['template', 'exercises']);
+                
+                // Apply filters safely
+                if ($request->has('status') && !empty($request->get('status'))) {
+                    $query->where('status', $request->get('status'));
+                }
+                
+                if ($request->has('template_id') && !empty($request->get('template_id'))) {
+                    $query->where('template_id', $request->get('template_id'));
+                }
+                
+                if ($request->has('days') && is_numeric($request->get('days'))) {
+                    $days = (int)$request->get('days');
+                    $query->where('completed_at', '>=', now()->subDays($days));
+                }
+
+                $limit = min((int) $request->get('limit', 20), 100);
+                
+                $logs = $query->orderBy('completed_at', 'desc')
+                            ->orderBy('created_at', 'desc')
+                            ->limit($limit)
+                            ->get();
+
+                Log::info('Found ' . $logs->count() . ' workout sessions');
+
+                $logsArray = $logs->map(function ($log) {
+                    return $log->toArray();
+                })->toArray();
+
+                return $this->successResponse($logsArray, 'Workout logs retrieved successfully');
+
+            } catch (\Exception $e) {
+                Log::error('Error getting workout logs', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                
+                // Return empty array instead of failing
+                return $this->successResponse([], 'No workout sessions found');
+            }
+
+        }, 'Get workout logs');
+    }
+
+    public function showLog($id)
+    {
+        return $this->execute(function () use ($id) {
+            $user = $this->getAuthenticatedUser();
+            
+            try {
+                $log = Workout::where('is_template', false)
+                            ->where('user_id', $user->id)
+                            ->with(['template', 'exercises'])
+                            ->findOrFail($id);
+                            
+                return $this->successResponse($log->toArray(), 'Workout log retrieved successfully');
+                
+            } catch (\Exception $e) {
+                Log::error('Error showing workout log', [
+                    'log_id' => $id,
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage()
+                ]);
+                
+                return $this->notFoundResponse('Workout session not found');
+            }
+        }, 'Show workout log');
+    }
+
+    public function logWorkout(Request $request)
+    {
+        return $this->execute(function () use ($request) {
+            $user = $this->getAuthenticatedUser();
+
+            $validated = $request->validate([
+                'template_id' => 'nullable|exists:workouts,id',
+                'name' => 'required|string|max:255',
+                'duration_minutes' => 'required|integer|min:1',
+                'calories_burned' => 'nullable|integer|min:0',
+                'notes' => 'nullable|string',
+                'completed_at' => 'nullable|date',
+                'exercises' => 'nullable|array',
+                'category' => 'nullable|string|in:strength,cardio,hiit,flexibility',
+                'difficulty_level' => 'nullable|string|in:beginner,intermediate,advanced',
+            ]);
+
+            try {
+                $log = $this->workoutService->logWorkout($validated, $user);
+                return $this->createdResponse($log->toArray(), 'Workout logged successfully');
+                
+            } catch (\Exception $e) {
+                Log::error('Error logging workout', [
+                    'user_id' => $user->id,
+                    'data' => $validated,
+                    'error' => $e->getMessage()
+                ]);
+                
+                return $this->errorResponse('Failed to log workout', 500);
+            }
+
+        }, 'Log workout');
+    }
+
+    public function startWorkout(Request $request)
+    {
+        return $this->execute(function () use ($request) {
+            $user = $this->getAuthenticatedUser();
+
+            $validated = $request->validate([
+                'template_id' => 'nullable|exists:workouts,id',
+            ]);
+
+            try {
+                $session = $this->workoutService->startWorkout($user, $validated['template_id'] ?? null);
+                return $this->createdResponse($session->toArray(), 'Workout session started successfully');
+                
+            } catch (\Exception $e) {
+                Log::error('Error starting workout', [
+                    'user_id' => $user->id,
+                    'template_id' => $validated['template_id'] ?? null,
+                    'error' => $e->getMessage()
+                ]);
+                
+                return $this->errorResponse('Failed to start workout session', 500);
+            }
+
+        }, 'Start workout session');
+    }
+
+    public function completeWorkout(Request $request, $id)
+    {
+        return $this->execute(function () use ($request, $id) {
+            $user = $this->getAuthenticatedUser();
+            
+            try {
+                $session = Workout::where('is_template', false)
+                                ->where('user_id', $user->id)
+                                ->findOrFail($id);
+
+                $validated = $request->validate([
+                    'notes' => 'nullable|string',
+                    'duration_minutes' => 'sometimes|integer|min:1',
+                    'exercises' => 'nullable|array',
+                ]);
+
+                $completedWorkout = $this->workoutService->completeWorkout($session, $validated);
+                return $this->successResponse($completedWorkout->fresh()->toArray(), 'Workout session completed successfully');
+                
+            } catch (\Exception $e) {
+                Log::error('Error completing workout', [
+                    'session_id' => $id,
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage()
+                ]);
+                
+                return $this->errorResponse('Failed to complete workout session', 500);
+            }
+
+        }, 'Complete workout session');
+    }
+
+    public function deleteLog($id)
+    {
+        return $this->execute(function () use ($id) {
+            $user = $this->getAuthenticatedUser();
+            
+            try {
+                $log = Workout::where('is_template', false)
+                            ->where('user_id', $user->id)
+                            ->findOrFail($id);
+                            
+                $log->delete();
+                return $this->successResponse(null, 'Workout log deleted successfully');
+                
+            } catch (\Exception $e) {
+                Log::error('Error deleting workout log', [
+                    'log_id' => $id,
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage()
+                ]);
+                
+                return $this->errorResponse('Failed to delete workout session', 500);
+            }
+        }, 'Delete workout log');
+    }
+
+    // =============================================
+    // STATISTICS AND ANALYTICS
+    // =============================================
+
+    public function getStats()
+    {
+        return $this->execute(function () {
+            $user = $this->getAuthenticatedUser();
+            
+            Log::info('Getting workout stats for user: ' . $user->id);
+            
+            try {
+                $stats = $this->statisticsService->getUserStats($user);
+                
+                Log::info('Workout stats retrieved successfully', [
+                    'user_id' => $user->id,
+                    'stats' => $stats
+                ]);
+                
+                return $this->successResponse($stats, 'Workout statistics retrieved successfully');
+                
+            } catch (\Exception $e) {
+                Log::error('Error getting workout stats', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                
+                // Return default stats on error
+                $defaultStats = [
+                    'total_workouts' => 0,
+                    'total_minutes' => 0,
+                    'total_calories' => 0,
+                    'current_streak' => 0,
+                    'weekly_workouts' => 0,
+                    'monthly_workouts' => 0,
+                    'average_duration' => 0,
+                    'favorite_category' => 'strength'
+                ];
+                
+                return $this->successResponse($defaultStats, 'Default workout statistics provided');
+            }
+        }, 'Get workout statistics');
+    }
+
+    public function getWeeklyStats()
+    {
+        return $this->execute(function () {
+            $user = $this->getAuthenticatedUser();
+            
+            try {
+                $weeklyData = $this->statisticsService->getWeeklyData($user);
+                return $this->successResponse($weeklyData, 'Weekly statistics retrieved successfully');
+                
+            } catch (\Exception $e) {
+                Log::error('Error getting weekly stats', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage()
+                ]);
+                
+                return $this->successResponse([], 'No weekly data available');
+            }
+        }, 'Get weekly statistics');
+    }
+
+    public function getMonthlyStats()
+    {
+        return $this->execute(function () {
+            $user = $this->getAuthenticatedUser();
+            
+            try {
+                $monthlyData = $this->statisticsService->getMonthlyOverview($user);
+                return $this->successResponse($monthlyData, 'Monthly statistics retrieved successfully');
+                
+            } catch (\Exception $e) {
+                Log::error('Error getting monthly stats', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage()
+                ]);
+                
+                return $this->successResponse([], 'No monthly data available');
+            }
+        }, 'Get monthly statistics');
+    }
+
+    public function getConsistency(Request $request)
+    {
+        return $this->execute(function () use ($request) {
+            $user = $this->getAuthenticatedUser();
+            
+            try {
+                $days = (int) $request->get('days', 30);
+                $consistency = $this->statisticsService->getConsistencyScore($user, $days);
+                
+                return $this->successResponse([
+                    'consistency_score' => $consistency,
+                    'period_days' => $days
+                ], 'Consistency data retrieved successfully');
+                
+            } catch (\Exception $e) {
+                Log::error('Error getting consistency data', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage()
+                ]);
+                
+                return $this->successResponse([
+                    'consistency_score' => 0,
+                    'period_days' => 30
+                ], 'Default consistency data provided');
+            }
+        }, 'Get consistency data');
+    }
+
+    // =============================================
+    // ADDITIONAL HELPER METHODS
+    // =============================================
+
+    public function getWorkoutHistory(Request $request)
+    {
+        return $this->execute(function () use ($request) {
+            $user = $this->getAuthenticatedUser();
+            
+            try {
+                $query = Workout::where('is_template', false)
+                              ->where('user_id', $user->id)
+                              ->where('status', 'completed')
+                              ->with(['template', 'exercises']);
+
+                // Apply date range filter
+                if ($request->has('start_date') && $request->has('end_date')) {
+                    $query->whereBetween('completed_at', [
+                        $request->get('start_date'),
+                        $request->get('end_date')
+                    ]);
+                }
+
+                // Apply category filter
+                if ($request->has('category') && $request->get('category') !== 'all') {
+                    $query->where('category', $request->get('category'));
+                }
+
+                $limit = min((int) $request->get('limit', 50), 100);
+                
+                $history = $query->orderBy('completed_at', 'desc')
+                               ->limit($limit)
+                               ->get();
+
+                $historyArray = $history->map(function ($session) {
+                    return $session->toArray();
+                })->toArray();
+
+                return $this->successResponse($historyArray, 'Workout history retrieved successfully');
+                
+            } catch (\Exception $e) {
+                Log::error('Error getting workout history', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage()
+                ]);
+                
+                return $this->successResponse([], 'No workout history found');
+            }
+        }, 'Get workout history');
+    }
+
+    public function getPublicTemplates(Request $request)
+    {
+        return $this->execute(function () use ($request) {
+            try {
+                $query = Workout::where('is_template', true)
+                              ->where('is_public', true)
+                              ->with(['user:id,name', 'exercises']);
+                
+                // Apply filters
+                if ($request->has('category') && $request->get('category') !== 'all') {
+                    $query->where('category', $request->get('category'));
+                }
+                
+                if ($request->has('difficulty') && $request->get('difficulty') !== 'all') {
+                    $query->where('difficulty_level', $request->get('difficulty'));
+                }
+
+                if ($request->has('search') && !empty($request->get('search'))) {
+                    $search = $request->get('search');
+                    $query->where(function($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%")
+                          ->orWhere('description', 'like', "%{$search}%");
+                    });
+                }
+
+                $limit = min((int) $request->get('limit', 20), 50);
+                
+                $templates = $query->orderBy('created_at', 'desc')
+                                 ->limit($limit)
+                                 ->get();
+
+                $templatesArray = $templates->map(function ($template) {
+                    return $template->toArray();
+                })->toArray();
+
+                return $this->successResponse($templatesArray, 'Public workout templates retrieved successfully');
+
+            } catch (\Exception $e) {
+                Log::error('Error getting public templates', [
+                    'error' => $e->getMessage()
+                ]);
+                
+                return $this->successResponse([], 'No public templates found');
+            }
+
+        }, 'Get public workout templates');
+    }
+
+    public function searchWorkouts(Request $request)
+    {
+        return $this->execute(function () use ($request) {
+            $user = $this->getAuthenticatedUser();
+            
+            $validated = $request->validate([
+                'query' => 'required|string|min:2|max:100',
+                'type' => 'nullable|in:templates,sessions,all',
+                'limit' => 'nullable|integer|min:1|max:50'
+            ]);
+
+            try {
+                $query = $validated['query'];
+                $type = $validated['type'] ?? 'all';
+                $limit = $validated['limit'] ?? 20;
+
+                $results = [];
+
+                if ($type === 'templates' || $type === 'all') {
+                    $templates = Workout::where('is_template', true)
+                                      ->where('user_id', $user->id)
+                                      ->with('exercises')
+                                      ->where(function($q) use ($query) {
+                                          $q->where('name', 'like', "%{$query}%")
+                                            ->orWhere('description', 'like', "%{$query}%");
+                                      })
+                                      ->limit($limit)
+                                      ->get();
+                    
+                    $results['templates'] = $templates->map(function($template) {
+                        return $template->toArray();
+                    })->toArray();
+                }
+
+                if ($type === 'sessions' || $type === 'all') {
+                    $sessions = Workout::where('is_template', false)
+                                     ->where('user_id', $user->id)
+                                     ->with(['template', 'exercises'])
+                                     ->where(function($q) use ($query) {
+                                         $q->where('name', 'like', "%{$query}%")
+                                           ->orWhere('notes', 'like', "%{$query}%");
+                                     })
+                                     ->limit($limit)
+                                     ->get();
+                    
+                    $results['sessions'] = $sessions->map(function($session) {
+                        return $session->toArray();
+                    })->toArray();
+                }
+
+                return $this->successResponse($results, 'Search results retrieved successfully');
+
+            } catch (\Exception $e) {
+                Log::error('Error searching workouts', [
+                    'user_id' => $user->id,
+                    'query' => $validated['query'] ?? 'unknown',
+                    'error' => $e->getMessage()
+                ]);
+                
+                return $this->successResponse(['templates' => [], 'sessions' => []], 'No search results found');
+            }
+        }, 'Search workouts');
+    }}

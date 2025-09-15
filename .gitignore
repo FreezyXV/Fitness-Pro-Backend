@@ -1,0 +1,362 @@
+# ==============================================
+# LARAVEL FRAMEWORK FILES
+# ==============================================
+
+# Laravel Storage Directories
+/storage/app/*
+!storage/app/.gitkeep
+!storage/app/public/
+/storage/framework/cache/*
+!storage/framework/cache/.gitkeep
+/storage/framework/sessions/*
+!storage/framework/sessions/.gitkeep
+/storage/framework/testing/*
+!storage/framework/testing/.gitkeep
+/storage/framework/views/*
+!storage/framework/views/.gitkeep
+/storage/logs/*
+!storage/logs/.gitkeep
+/storage/clockwork/
+/storage/pail/
+
+# Bootstrap Cache
+/bootstrap/cache/*
+!bootstrap/cache/.gitkeep
+
+# Laravel Public Files
+/public/build/
+/public/hot
+/public/storage
+/public/css/
+/public/js/
+/public/mix-manifest.json
+
+# Laravel Specific
+.phpunit.result.cache
+/phpunit.xml
+/phpunit.dusk.xml
+
+# ==============================================
+# ENVIRONMENT & CONFIGURATION FILES
+# ==============================================
+
+# Environment Variables (CRITICAL SECURITY)
+.env
+.env.*
+!.env.example
+.env.backup
+.env.production
+.env.local
+.env.development
+.env.testing
+.env.staging
+
+# Configuration Files
+/config/local.php
+/config/staging.php
+/config/production.php
+config.json
+config-local.json
+
+# Laravel Homestead
+Homestead.json
+Homestead.yaml
+Vagrantfile
+
+# ==============================================
+# DEPENDENCY & PACKAGE MANAGEMENT
+# ==============================================
+
+# Composer
+/vendor/
+composer.phar
+composer.lock
+auth.json
+
+# Node.js & NPM
+/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+yarn.lock
+package-lock.json
+pnpm-debug.log*
+.pnpm-store/
+
+# ==============================================
+# SECURITY & SENSITIVE FILES
+# ==============================================
+
+# Private Keys & Certificates
+*.key
+*.pem
+*.crt
+*.cert
+*.p12
+*.pfx
+storage/*.key
+oauth-private.key
+oauth-public.key
+
+# JWT Keys
+jwt.key
+jwt.pub
+
+# SSL Certificates
+ssl/
+
+# Database Files
+*.sqlite
+*.sqlite3
+*.db
+
+# Backup Files
+*.sql
+*.dump
+backup/
+backups/
+
+# Configuration with Sensitive Data
+/config/secrets.php
+/config/services.php.local
+
+# ==============================================
+# LOGS & DEBUGGING FILES
+# ==============================================
+
+# Log Files
+*.log
+logs/
+storage/logs/*
+laravel.log
+error.log
+access.log
+debug.log
+
+# Laravel Telescope (Development Only)
+/storage/telescope/
+
+# Debugging & Profiling
+.phpunit.cache/
+coverage/
+.coverage/
+*.coverage
+coverage.xml
+clover.xml
+
+# Laravel Pail
+/storage/pail/
+
+# ==============================================
+# DEVELOPMENT & IDE FILES
+# ==============================================
+
+# IDEs & Editors
+/.fleet
+/.idea/
+/.nova/
+/.vscode/
+/.vs/
+/.zed/
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+.metadata/
+
+# PhpStorm
+.phpactor.json
+*.iml
+
+# Visual Studio Code
+.vscode/
+!.vscode/settings.json.example
+!.vscode/launch.json.example
+.history/
+
+# Sublime Text
+*.sublime-*
+sftp-config.json
+
+# Vim & Emacs
+*~
+*.swp
+*.swo
+*#
+.#*
+
+# ==============================================
+# OPERATING SYSTEM FILES
+# ==============================================
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.tmp
+*.temp
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.directory
+.Trash-*
+.nfs*
+
+# ==============================================
+# BUILD & COMPILATION FILES
+# ==============================================
+
+# Laravel Mix / Vite
+/public/build/
+/public/hot
+public/css/
+public/js/
+public/fonts/
+public/mix-manifest.json
+public/storage
+mix-manifest.json
+webpack-stats.json
+
+# Asset Compilation
+/resources/sass/compiled/
+/resources/css/compiled/
+
+# ==============================================
+# TESTING FILES
+# ==============================================
+
+# Test Coverage
+/coverage/
+/tests/coverage/
+phpunit.xml
+.phpunit.cache/
+_coverage/
+.nyc_output/
+
+# Test Databases
+testing.sqlite
+test.db
+tests.sqlite
+
+# Codeception
+tests/_output/
+tests/_support/_generated/
+
+# ==============================================
+# DEPLOYMENT & CI/CD FILES
+# ==============================================
+
+# Deployment Scripts
+deploy.sh
+deploy.php
+deploy.json
+deploy.yml
+deploy.yaml
+deployment.log
+
+# Docker (if not used)
+Dockerfile.local
+docker-compose.override.yml
+.dockerignore.local
+
+# CI/CD Secrets
+.github/secrets/
+.gitlab-ci-local.yml
+.travis.local.yml
+
+# ==============================================
+# CACHE & TEMPORARY FILES
+# ==============================================
+
+# General Cache
+cache/
+.cache/
+tmp/
+temp/
+*.tmp
+*.temp
+*.cache
+
+# Laravel Cache
+bootstrap/cache/compiled.php
+bootstrap/cache/config.php
+bootstrap/cache/packages.php
+bootstrap/cache/routes.php
+bootstrap/cache/services.php
+
+# ==============================================
+# THIRD-PARTY & EXTERNAL FILES
+# ==============================================
+
+# Payment Gateways
+/config/stripe.php
+/config/paypal.php
+stripe-webhook.log
+paypal.log
+
+# External APIs
+/config/apis/
+api-keys.json
+external-config.json
+
+# Media Files (Large Files)
+/storage/app/public/videos/
+/storage/app/public/large-images/
+/public/uploads/videos/
+*.mp4
+*.avi
+*.mov
+*.wmv
+
+# ==============================================
+# CUSTOM PROJECT FILES
+# ==============================================
+
+# Claude Code Assistant
+claude/
+.claude/
+
+# Custom Development Tools
+dev-tools/
+development/
+local-scripts/
+
+# Project Documentation (if sensitive)
+docs/internal/
+docs/private/
+
+# Custom Logs
+custom.log
+app-specific.log
+
+# Backup & Archive Files
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+backup-*
+archive-*
