@@ -29,5 +29,5 @@ kill_timeout = "5s"
   force_https = true
 
 [deploy]
-  release_command = "php artisan migrate --force"
+  release_command = "php /var/www/html/artisan migrate --force"
   strategy = "immediate"
