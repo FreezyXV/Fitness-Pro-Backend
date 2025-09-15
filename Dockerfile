@@ -42,6 +42,12 @@ RUN pecl install redis && docker-php-ext-enable redis
 # Copy composer from official image
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+# Copy composer files first
+COPY composer.json composer.lock ./
+
+# Install PHP dependencies first
+RUN composer install --no-dev --optimize-autoloader --no-interaction
+
 # Copy application files
 COPY . .
 
@@ -52,9 +58,6 @@ RUN mkdir -p storage/app/public \
     storage/framework/views \
     storage/logs \
     bootstrap/cache
-
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html \

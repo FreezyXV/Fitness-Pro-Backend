@@ -10,6 +10,13 @@ kill_timeout = "5s"
   dockerfile = "Dockerfile"
   ignorefile = ".dockerignore"
 
+[[statics]]
+  guest_path = "/app/public"
+  url_prefix = "/static/"
+
+[deploy]
+  strategy = "immediate"
+
 [env]
   APP_ENV = "production"
   APP_DEBUG = "false"
@@ -26,3 +33,4 @@ kill_timeout = "5s"
 
 [deploy]
   release_command = "php artisan migrate --force"
+  strategy = "immediate"
