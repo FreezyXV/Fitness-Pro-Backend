@@ -2,6 +2,9 @@
 app = "fitness-pro-backend"
 primary_region = "cdg"
 
+[build]
+  dockerfile = "Dockerfile"
+
 [experimental]
   auto_rollback = true
 
