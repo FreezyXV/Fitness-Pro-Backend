@@ -20,7 +20,10 @@ RUN apk add --no-cache \
     libwebp-dev \
     postgresql-dev \
     nginx \
-    supervisor
+    supervisor \
+    autoconf \
+    g++ \
+    make
 
 # Install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
