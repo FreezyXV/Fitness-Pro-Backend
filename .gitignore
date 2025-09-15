@@ -343,6 +343,10 @@ dev-tools/
 development/
 local-scripts/
 
+# Fly.io deployment files
+.fly/
+fly.toml.bak
+
 # Project Documentation (if sensitive)
 docs/internal/
 docs/private/
