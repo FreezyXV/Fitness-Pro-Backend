@@ -45,6 +45,14 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 # Copy application files
 COPY . .
 
+# Create storage and cache directories if they don't exist
+RUN mkdir -p storage/app/public \
+    storage/framework/cache \
+    storage/framework/sessions \
+    storage/framework/views \
+    storage/logs \
+    bootstrap/cache
+
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
@@ -59,11 +67,16 @@ COPY docker/nginx.conf /etc/nginx/nginx.conf
 COPY docker/php.ini /usr/local/etc/php/conf.d/99-custom.ini
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Optimize Laravel
-RUN php artisan config:cache \
-    && php artisan route:cache \
-    && php artisan view:cache \
-    && php artisan event:cache
+# Generate application key if .env doesn't exist
+RUN if [ ! -f .env ]; then cp .env.example .env; fi \
+    && php artisan key:generate --no-interaction
+
+# Create SQLite database file
+RUN touch database/database.sqlite
+
+# Optimize Laravel (skip config:cache as it requires DB connection)
+RUN php artisan route:cache \
+    && php artisan view:cache
 
 # Create nginx directories
 RUN mkdir -p /var/log/nginx /var/cache/nginx

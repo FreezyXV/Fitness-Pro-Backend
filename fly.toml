@@ -3,13 +3,16 @@ primary_region = "cdg"
 
 [build]
   dockerfile = "Dockerfile"
-  buildpacks = []
 
 [env]
   APP_ENV = "production"
+  APP_DEBUG = "false"
   LOG_CHANNEL = "stderr"
   SESSION_DRIVER = "database"
   CACHE_DRIVER = "database"
+  QUEUE_CONNECTION = "database"
+  DB_CONNECTION = "sqlite"
+  FILESYSTEM_DISK = "local"
 
 [http_service]
   internal_port = 80

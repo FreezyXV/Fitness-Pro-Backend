@@ -109,6 +109,7 @@ ssl/
 *.sqlite
 *.sqlite3
 *.db
+!database/database.sqlite
 
 # Backup Files
 *.sql
