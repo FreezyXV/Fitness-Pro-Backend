@@ -347,6 +347,7 @@ local-scripts/
 # Fly.io deployment files
 .fly/*
 !.fly/app_type
+!.fly/build_strategy
 fly.toml.bak
 
 # Project Documentation (if sensitive)
