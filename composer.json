@@ -1,9 +1,9 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "fitness/backend-api",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "Fitness Pro Backend API Application.",
+    "keywords": ["fitness", "api", "backend"],
     "license": "MIT",
     "require": {
         "php": "^8.2",
