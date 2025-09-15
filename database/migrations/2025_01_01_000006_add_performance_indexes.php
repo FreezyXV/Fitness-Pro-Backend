@@ -44,7 +44,11 @@ return new class extends Migration
             $table->index(['category', 'body_part'], 'exercises_category_bodypart_idx');
             $table->index('difficulty_level', 'exercises_difficulty_idx');
             $table->index(['is_public', 'category'], 'exercises_public_category_idx');
-            $table->fullText(['name', 'description'], 'exercises_search_idx');
+
+            // Only create fulltext index for MySQL/PostgreSQL, not SQLite
+            if (config('database.default') !== 'sqlite') {
+                $table->fullText(['name', 'description'], 'exercises_search_idx');
+            }
         });
 
         // Goals indexes
@@ -185,8 +189,7 @@ return new class extends Migration
                 'exercises_category_idx',
                 'exercises_category_bodypart_idx',
                 'exercises_difficulty_idx',
-                'exercises_public_category_idx',
-                'exercises_search_idx'
+                'exercises_public_category_idx'
             ],
             'workout_exercises' => [
                 'workout_exercises_workout_order_idx',
@@ -217,6 +220,13 @@ return new class extends Migration
                     }
                 });
             }
+        }
+
+        // Handle fulltext index separately for non-SQLite databases
+        if (config('database.default') !== 'sqlite' && Schema::hasTable('exercises')) {
+            Schema::table('exercises', function (Blueprint $table) {
+                $table->dropIndex('exercises_search_idx');
+            });
         }
     }
 };
