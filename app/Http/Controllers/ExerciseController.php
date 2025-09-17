@@ -120,7 +120,7 @@ class ExerciseController extends BaseController
                 'body_part' => 'required|string|max:100',
                 'description' => 'nullable|string',
                 'muscle_groups' => 'nullable|array',
-                'equipment_needed' => 'nullable|string|max:255',
+                'equipment' => 'nullable|string|max:255',
                 'video_url' => 'nullable|string|max:500',
                 'duration' => 'nullable|integer|min:1|max:300',
                 'difficulty' => 'required|in:beginner,intermediate,advanced',
@@ -178,7 +178,7 @@ class ExerciseController extends BaseController
                 'body_part' => 'sometimes|string|max:100',
                 'description' => 'nullable|string',
                 'muscle_groups' => 'nullable|array',
-                'equipment_needed' => 'nullable|string|max:255',
+                'equipment' => 'nullable|string|max:255',
                 'video_url' => 'nullable|string|max:500',
                 'duration' => 'nullable|integer|min:1|max:300',
                 'difficulty' => 'sometimes|in:beginner,intermediate,advanced',
@@ -476,16 +476,16 @@ class ExerciseController extends BaseController
             $avgDuration = Exercise::whereNotNull('duration')->avg('duration');
             $avgDuration = $avgDuration ? round($avgDuration, 2) : 0;
 
-            $equipmentBreakdown = Exercise::selectRaw('equipment_needed, COUNT(*) as count')
-                ->whereNotNull('equipment_needed')
-                ->where('equipment_needed', '!=', '')
-                ->groupBy('equipment_needed')
+            $equipmentBreakdown = Exercise::selectRaw('equipment, COUNT(*) as count')
+                ->whereNotNull('equipment')
+                ->where('equipment', '!=', '')
+                ->groupBy('equipment')
                 ->orderBy('count', 'desc')
                 ->limit(10)
                 ->get()
                 ->map(function($item) {
                     return [
-                        'equipment_needed' => $item->equipment_needed,
+                        'equipment' => $item->equipment,
                         'count' => $item->count
                     ];
                 })
@@ -668,13 +668,13 @@ class ExerciseController extends BaseController
         if ($equipment && $equipment !== '' && $equipment !== 'all') {
             if ($equipment === 'none') {
                 $query->where(function($sub) {
-                    $sub->whereNull('equipment_needed')
-                        ->orWhere('equipment_needed', '')
-                        ->orWhere('equipment_needed', 'none')
-                        ->orWhere('equipment_needed', 'aucun');
+                    $sub->whereNull('equipment')
+                        ->orWhere('equipment', '')
+                        ->orWhere('equipment', 'none')
+                        ->orWhere('equipment', 'aucun');
                 });
             } else {
-                $query->where('equipment_needed', 'like', "%{$equipment}%");
+                $query->where('equipment', 'like', "%{$equipment}%");
             }
         }
 
