@@ -143,7 +143,7 @@ Route::prefix('exercises')->name('api.exercises.')->group(function () {
 // =============================================
 // 🔒 PROTECTED ROUTES - SANCTUM MIDDLEWARE
 // =============================================
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('api.auth:sanctum')->group(function () {
     
     // =============================================
     // 🔐 AUTHENTICATED USER MANAGEMENT
@@ -353,7 +353,7 @@ Route::middleware('auth:sanctum')->group(function () {
 // 🚫 DEBUG ROUTES (Development Only)
 // =============================================
 if (config('app.debug') && config('app.env') !== 'production') {
-    Route::middleware('auth:sanctum')->prefix('debug')->name('api.debug.')->group(function () {
+    Route::middleware('api.auth:sanctum')->prefix('debug')->name('api.debug.')->group(function () {
         Route::get('/user', function (Request $request) {
             return response()->json([
                 'success' => true,

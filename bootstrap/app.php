@@ -15,6 +15,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Register custom API authentication middleware
+        $middleware->alias([
+            'api.auth' => \App\Http\Middleware\ApiAuthenticate::class,
+        ]);
+
         // Add JSON response cleaner for API routes
         $middleware->api(append: [
             \App\Http\Middleware\CleanJsonResponse::class,
