@@ -328,6 +328,58 @@ Route::get('/workouts/templates/public/{id}', function ($id) {
     }
 })->where('id', '[0-9]+')->name('workouts.templates.public.show');
 
+// Public goals endpoints for portfolio visitors
+Route::get('/goals/public', function () {
+    try {
+        \Log::info('Attempting to get public goals');
+
+        $goals = \App\Models\Goal::orderBy('created_at', 'desc')->get();
+
+        \Log::info('Found goals: ' . $goals->count());
+
+        return response()->json([
+            'success' => true,
+            'data' => $goals,
+            'message' => 'Public goals retrieved successfully'
+        ]);
+    } catch (\Exception $e) {
+        \Log::error('Error getting public goals: ' . $e->getMessage());
+        \Log::error('Stack trace: ' . $e->getTraceAsString());
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to get public goals: ' . $e->getMessage(),
+            'error' => $e->getTraceAsString()
+        ], 500);
+    }
+})->name('goals.public');
+
+// Public individual goal endpoint for portfolio visitors
+Route::get('/goals/public/{id}', function ($id) {
+    try {
+        \Log::info('Attempting to get public goal: ' . $id);
+
+        $goal = \App\Models\Goal::findOrFail($id);
+
+        \Log::info('Found goal: ' . $goal->title);
+
+        return response()->json([
+            'success' => true,
+            'data' => $goal,
+            'message' => 'Public goal retrieved successfully'
+        ]);
+    } catch (\Exception $e) {
+        \Log::error('Error getting public goal: ' . $e->getMessage());
+        \Log::error('Stack trace: ' . $e->getTraceAsString());
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to get public goal: ' . $e->getMessage(),
+            'error' => $e->getTraceAsString()
+        ], 500);
+    }
+})->where('id', '[0-9]+')->name('goals.public.show');
+
 // Public Portfolio Demo Seeding Endpoint (for portfolio visitors)
 Route::post('/portfolio-seed', function () {
     try {
@@ -382,10 +434,15 @@ Route::post('/portfolio-seed', function () {
             $inserted++;
         }
 
+        // Run the GoalsSeeder to add demo goals
+        \Artisan::call('db:seed', ['--class' => 'GoalsSeeder']);
+        $goalCount = \App\Models\Goal::count();
+
         return response()->json([
             'success' => true,
             'message' => 'Portfolio demo data seeded successfully',
             'exercises_created' => $inserted,
+            'goals_created' => $goalCount,
             'status' => 'freshly_seeded'
         ]);
     } catch (\Exception $e) {
