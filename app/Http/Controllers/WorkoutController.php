@@ -42,7 +42,10 @@ class WorkoutController extends BaseController
 
             $templates = $this->cacheService->getWorkoutTemplates($user->id, $filters, function() use ($user, $request) {
                 try {
-                    $query = Workout::where('is_template', true)
+                    $query = Workout::where(function($q) {
+                                      // Include templates (true) and seeded workouts (null)
+                                      $q->where('is_template', true)->orWhereNull('is_template');
+                                  })
                                   ->where(function($q) use ($user) {
                                       // Show user's own templates OR public templates (user_id = 1 acts as system templates)
                                       $q->where('user_id', $user->id)
