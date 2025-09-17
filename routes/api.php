@@ -380,6 +380,27 @@ Route::get('/goals/public/{id}', function ($id) {
     }
 })->where('id', '[0-9]+')->name('goals.public.show');
 
+// Force goals seeder endpoint
+Route::post('/goals-seed', function () {
+    try {
+        \Artisan::call('db:seed', ['--class' => 'GoalsSeeder']);
+        $goalCount = \App\Models\Goal::count();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Goals seeded successfully',
+            'goals_created' => $goalCount,
+            'status' => 'seeded'
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to seed goals: ' . $e->getMessage(),
+            'error' => $e->getTraceAsString()
+        ], 500);
+    }
+})->name('api.goals-seed');
+
 // Public Portfolio Demo Seeding Endpoint (for portfolio visitors)
 Route::post('/portfolio-seed', function () {
     try {
