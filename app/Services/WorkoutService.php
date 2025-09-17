@@ -171,12 +171,12 @@ class WorkoutService
         ];
 
         if ($session->status === 'in_progress' && $session->started_at) {
-            $updateData['duration_minutes'] = $session->started_at->diffInMinutes(now());
+            $updateData['actual_duration'] = $session->started_at->diffInMinutes(now());
         }
-        $updateData['duration_minutes'] = $completionData['duration_minutes'] ?? $updateData['duration_minutes'] ?? 0;
+        $updateData['actual_duration'] = $completionData['actual_duration'] ?? $updateData['actual_duration'] ?? 0;
 
-        $updateData['calories_burned'] = $this->calorieCalculator->calculate(
-            $updateData['duration_minutes'], 
+        $updateData['actual_calories'] = $this->calorieCalculator->calculate(
+            $updateData['actual_duration'], 
             $session->user->weight ?? 70, 
             $session->template->category ?? 'general'
         );
@@ -195,8 +195,8 @@ class WorkoutService
 
         Log::info('Workout session completed', [
             'session_id' => $session->id,
-            'duration' => $updateData['duration_minutes'],
-            'calories' => $updateData['calories_burned']
+            'duration' => $updateData['actual_duration'],
+            'calories' => $updateData['actual_calories']
         ]);
         return $session;
     }
@@ -210,9 +210,9 @@ class WorkoutService
         $data['status'] = 'completed';
         $data['completed_at'] = $data['completed_at'] ?? now();
 
-        if (!isset($data['calories_burned'])) {
-            $data['calories_burned'] = $this->calorieCalculator->calculate(
-                $data['duration_minutes'], 
+        if (!isset($data['actual_calories'])) {
+            $data['actual_calories'] = $this->calorieCalculator->calculate(
+                $data['actual_duration'], 
                 $user->weight ?? 70, 
                 'general'
             );
@@ -254,8 +254,8 @@ class WorkoutService
             // For now, we rely on the StatisticsService to calculate stats dynamically
             Log::info('User stats updated after workout completion', [
                 'user_id' => $user->id,
-                'workout_duration' => $workoutData['duration_minutes'],
-                'calories_burned' => $workoutData['calories_burned']
+                'workout_duration' => $workoutData['actual_duration'],
+                'calories_burned' => $workoutData['actual_calories']
             ]);
             
             // Clear statistics cache to force fresh calculation

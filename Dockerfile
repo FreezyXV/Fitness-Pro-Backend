@@ -81,16 +81,12 @@ COPY docker/nginx.conf /etc/nginx/nginx.conf
 COPY docker/php.ini /usr/local/etc/php/conf.d/99-custom.ini
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Create production .env file with SQLite and database sessions
+# Create production .env file with database sessions
 RUN if [ ! -f .env ]; then cp .env.example .env; fi \
     && sed -i 's/SESSION_DRIVER=file/SESSION_DRIVER=database/' .env \
     && sed -i 's/CACHE_STORE=file/CACHE_STORE=database/' .env \
     && sed -i 's/QUEUE_CONNECTION=database/QUEUE_CONNECTION=database/' .env \
     && php artisan key:generate --no-interaction
-
-# Create SQLite database file and run migrations
-RUN touch database/database.sqlite \
-    && php artisan migrate --force
 
 # Optimize Laravel (skip config:cache as it requires DB connection)
 RUN php artisan route:cache \
