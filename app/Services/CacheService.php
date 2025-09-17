@@ -261,7 +261,7 @@ class CacheService
             $this->getWorkoutTemplates(0, [], function() {
                 return \App\Models\Workout::where('is_template', true)
                     ->where('is_public', true)
-                    ->select(['id', 'name', 'category', 'difficulty_level', 'duration_minutes'])
+                    ->select(['id', 'name', 'category', 'difficulty_level', 'estimated_duration'])
                     ->withCount('exercises')
                     ->get()
                     ->toArray();
