@@ -89,6 +89,76 @@ Route::get('/version', function() {
     ]);
 })->name('api.version');
 
+// Public Portfolio Demo Seeding Endpoint (for portfolio visitors)
+Route::post('/portfolio-seed', function () {
+    try {
+        // Check if exercises already exist to avoid duplicate seeding
+        $exerciseCount = \App\Models\Exercise::count();
+        if ($exerciseCount > 0) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Portfolio demo data already exists',
+                'exercises_count' => $exerciseCount,
+                'status' => 'already_seeded'
+            ]);
+        }
+
+        // Direct database seeding (production-safe)
+        $exercises = [
+            // CHEST EXERCISES
+            ['name' => 'Push-ups', 'body_part' => 'chest', 'category' => 'strength', 'muscle_groups' => ['chest', 'triceps', 'shoulders'], 'equipment' => 'bodyweight', 'difficulty' => 'beginner', 'instructions' => ['Start in plank position', 'Lower body until chest nearly touches ground', 'Push back up to starting position'], 'duration' => 1, 'estimated_calories' => 5],
+            ['name' => 'Bench Press', 'body_part' => 'chest', 'category' => 'strength', 'muscle_groups' => ['chest', 'triceps', 'shoulders'], 'equipment' => 'barbell', 'difficulty' => 'intermediate', 'instructions' => ['Lie on bench with barbell above chest', 'Lower barbell to chest with control', 'Press back up to starting position'], 'duration' => 1, 'estimated_calories' => 8],
+            ['name' => 'Incline Dumbbell Press', 'body_part' => 'chest', 'category' => 'strength', 'muscle_groups' => ['chest', 'shoulders'], 'equipment' => 'dumbbells', 'difficulty' => 'intermediate', 'instructions' => ['Lie on incline bench with dumbbells', 'Press dumbbells up and together', 'Lower with control to starting position'], 'duration' => 1, 'estimated_calories' => 7],
+
+            // LEG EXERCISES
+            ['name' => 'Squats', 'body_part' => 'legs', 'category' => 'strength', 'muscle_groups' => ['quadriceps', 'glutes', 'calves'], 'equipment' => 'bodyweight', 'difficulty' => 'beginner', 'instructions' => ['Stand with feet shoulder-width apart', 'Lower hips back and down', 'Return to standing position'], 'duration' => 1, 'estimated_calories' => 6],
+            ['name' => 'Lunges', 'body_part' => 'legs', 'category' => 'strength', 'muscle_groups' => ['quadriceps', 'glutes', 'hamstrings'], 'equipment' => 'bodyweight', 'difficulty' => 'beginner', 'instructions' => ['Step forward into lunge position', 'Lower back knee toward ground', 'Return to starting position'], 'duration' => 1, 'estimated_calories' => 5],
+            ['name' => 'Deadlifts', 'body_part' => 'legs', 'category' => 'strength', 'muscle_groups' => ['hamstrings', 'glutes', 'back'], 'equipment' => 'barbell', 'difficulty' => 'advanced', 'instructions' => ['Stand with barbell at feet', 'Hip hinge movement to lift barbell', 'Return to ground with control'], 'duration' => 1, 'estimated_calories' => 10],
+
+            // CARDIO EXERCISES
+            ['name' => 'Running', 'body_part' => 'cardio', 'category' => 'cardio', 'muscle_groups' => ['legs', 'core'], 'equipment' => null, 'difficulty' => 'intermediate', 'instructions' => ['Maintain steady pace', 'Land on midfoot', 'Keep upright posture'], 'duration' => 30, 'estimated_calories' => 300],
+            ['name' => 'Jump Rope', 'body_part' => 'cardio', 'category' => 'cardio', 'muscle_groups' => ['legs', 'shoulders', 'core'], 'equipment' => 'jump_rope', 'difficulty' => 'intermediate', 'instructions' => ['Jump with both feet', 'Rotate rope with wrists', 'Keep light on feet'], 'duration' => 10, 'estimated_calories' => 100],
+            ['name' => 'Burpees', 'body_part' => 'cardio', 'category' => 'cardio', 'muscle_groups' => ['full_body'], 'equipment' => 'bodyweight', 'difficulty' => 'advanced', 'instructions' => ['Start standing', 'Squat and jump back to plank', 'Push-up, jump forward, jump up'], 'duration' => 1, 'estimated_calories' => 12],
+
+            // BACK EXERCISES
+            ['name' => 'Pull-ups', 'body_part' => 'back', 'category' => 'strength', 'muscle_groups' => ['back', 'biceps'], 'equipment' => 'pull_up_bar', 'difficulty' => 'intermediate', 'instructions' => ['Hang from bar with arms extended', 'Pull body up until chin over bar', 'Lower with control'], 'duration' => 1, 'estimated_calories' => 8],
+            ['name' => 'Bent-over Rows', 'body_part' => 'back', 'category' => 'strength', 'muscle_groups' => ['back', 'biceps'], 'equipment' => 'barbell', 'difficulty' => 'intermediate', 'instructions' => ['Bend at hips with barbell', 'Pull barbell to lower chest', 'Lower with control'], 'duration' => 1, 'estimated_calories' => 7],
+            ['name' => 'Lat Pulldowns', 'body_part' => 'back', 'category' => 'strength', 'muscle_groups' => ['back', 'biceps'], 'equipment' => 'cable_machine', 'difficulty' => 'beginner', 'instructions' => ['Sit at cable machine', 'Pull cable bar down to upper chest', 'Return with control'], 'duration' => 1, 'estimated_calories' => 6],
+        ];
+
+        $inserted = 0;
+        foreach ($exercises as $exercise) {
+            \App\Models\Exercise::create([
+                'name' => $exercise['name'],
+                'body_part' => $exercise['body_part'],
+                'category' => $exercise['category'],
+                'muscle_groups' => $exercise['muscle_groups'],
+                'equipment' => $exercise['equipment'],
+                'difficulty' => $exercise['difficulty'],
+                'instructions' => $exercise['instructions'],
+                'duration' => $exercise['duration'],
+                'estimated_calories' => $exercise['estimated_calories'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            $inserted++;
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Portfolio demo data seeded successfully',
+            'exercises_created' => $inserted,
+            'status' => 'freshly_seeded'
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to seed portfolio demo data: ' . $e->getMessage(),
+            'error' => $e->getTraceAsString()
+        ], 500);
+    }
+})->name('api.portfolio-seed');
+
 // =============================================
 // 🔐 PUBLIC AUTHENTICATION ROUTES
 // =============================================
