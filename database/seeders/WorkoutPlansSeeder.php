@@ -107,8 +107,8 @@ class WorkoutPlansSeeder extends Seeder
         $this->createWorkout([
             'name' => 'Programme Débutant - Corps Entier',
             'description' => 'Introduction parfaite au fitness avec des mouvements de base pour tout le corps',
-            'category' => 'strength',
-            'difficulty_level' => 'beginner',
+            'type' => 'strength',
+            'difficulty' => 'beginner',
             'exercises' => [
                 // Warm-up
                 ['name' => '90:90 Hip Crossover', 'sets' => 1, 'duration' => 60, 'restTime' => 0],
@@ -129,8 +129,8 @@ class WorkoutPlansSeeder extends Seeder
         $this->createWorkout([
             'name' => 'Débutant - Haut du Corps',
             'description' => 'Renforcement progressif des bras, épaules et poitrine',
-            'category' => 'strength',
-            'difficulty_level' => 'beginner',
+            'type' => 'strength',
+            'difficulty' => 'beginner',
             'exercises' => [
                 ['name' => '90:90 Hip Crossover', 'sets' => 1, 'duration' => 45, 'restTime' => 0],
                 ['name' => 'Push-Up', 'sets' => 3, 'reps' => 4, 'restTime' => 90],
@@ -145,8 +145,8 @@ class WorkoutPlansSeeder extends Seeder
         $this->createWorkout([
             'name' => 'Débutant - Bas du Corps',
             'description' => 'Développement des jambes et fessiers avec des mouvements sûrs',
-            'category' => 'strength',
-            'difficulty_level' => 'beginner',
+            'type' => 'strength',
+            'difficulty' => 'beginner',
             'exercises' => [
                 ['name' => '90:90 Hip Crossover', 'sets' => 1, 'duration' => 60, 'restTime' => 0],
                 ['name' => 'Prisoner Squat', 'sets' => 3, 'reps' => 10, 'restTime' => 90],
@@ -161,8 +161,8 @@ class WorkoutPlansSeeder extends Seeder
         $this->createWorkout([
             'name' => 'Débutant - Cardio & Mobilité',
             'description' => 'Amélioration de l\'endurance et de la flexibilité',
-            'category' => 'cardio',
-            'difficulty_level' => 'beginner',
+            'type' => 'cardio',
+            'difficulty' => 'beginner',
             'exercises' => [
                 ['name' => '90:90 Hip Crossover', 'sets' => 2, 'duration' => 45, 'restTime' => 30],
                 ['name' => 'Inchworm', 'sets' => 2, 'reps' => 5, 'restTime' => 60],
@@ -182,8 +182,8 @@ class WorkoutPlansSeeder extends Seeder
         $this->createWorkout([
             'name' => 'Intermédiaire - Upper Body',
             'description' => 'Entraînement intensif du haut du corps avec progressions',
-            'category' => 'strength',
-            'difficulty_level' => 'intermediate',
+            'type' => 'strength',
+            'difficulty' => 'intermediate',
             'exercises' => [
                 ['name' => '90:90 Hip Crossover', 'sets' => 1, 'duration' => 60, 'restTime' => 0],
                 ['name' => 'Push-Up Wide Grip', 'sets' => 3, 'reps' => 8, 'restTime' => 90],
@@ -200,8 +200,8 @@ class WorkoutPlansSeeder extends Seeder
         $this->createWorkout([
             'name' => 'Intermédiaire - Lower Body',
             'description' => 'Développement avancé des jambes et du tronc',
-            'category' => 'strength',
-            'difficulty_level' => 'intermediate',
+            'type' => 'strength',
+            'difficulty' => 'intermediate',
             'exercises' => [
                 ['name' => '90:90 Hip Crossover', 'sets' => 2, 'duration' => 45, 'restTime' => 30],
                 ['name' => 'Prisoner Squat', 'sets' => 4, 'reps' => 12, 'restTime' => 90],
@@ -217,8 +217,8 @@ class WorkoutPlansSeeder extends Seeder
         $this->createWorkout([
             'name' => 'Intermédiaire - Circuit Corps Entier',
             'description' => 'Entraînement en circuit pour force et endurance',
-            'category' => 'strength',
-            'difficulty_level' => 'intermediate',
+            'type' => 'strength',
+            'difficulty' => 'intermediate',
             'exercises' => [
                 ['name' => 'Inchworm', 'sets' => 2, 'reps' => 6, 'restTime' => 45],
                 ['name' => 'Push-Up Wide Grip', 'sets' => 3, 'reps' => 10, 'restTime' => 60],
@@ -235,8 +235,8 @@ class WorkoutPlansSeeder extends Seeder
         $this->createWorkout([
             'name' => 'Intermédiaire - HIIT Intense',
             'description' => 'Entraînement haute intensité pour brûler les calories',
-            'category' => 'hiit',
-            'difficulty_level' => 'intermediate',
+            'type' => 'hiit',
+            'difficulty' => 'intermediate',
             'exercises' => [
                 ['name' => '90:90 Hip Crossover', 'sets' => 1, 'duration' => 60, 'restTime' => 0],
                 ['name' => 'Inchworm', 'sets' => 3, 'duration' => 30, 'restTime' => 30],
@@ -252,8 +252,8 @@ class WorkoutPlansSeeder extends Seeder
         $this->createWorkout([
             'name' => 'Intermédiaire - Spécial Abdos',
             'description' => 'Renforcement complet du tronc et des abdominaux',
-            'category' => 'strength',
-            'difficulty_level' => 'intermediate',
+            'type' => 'strength',
+            'difficulty' => 'intermediate',
             'exercises' => [
                 ['name' => '90:90 Hip Crossover', 'sets' => 1, 'duration' => 45, 'restTime' => 0],
                 ['name' => 'Crunch', 'sets' => 3, 'reps' => 15, 'restTime' => 60],
@@ -275,8 +275,8 @@ class WorkoutPlansSeeder extends Seeder
         $this->createWorkout([
             'name' => 'Avancé - Push (Poussée)',
             'description' => 'Entraînement avancé pour poitrine, épaules et triceps',
-            'category' => 'strength',
-            'difficulty_level' => 'advanced',
+            'type' => 'strength',
+            'difficulty' => 'advanced',
             'exercises' => [
                 ['name' => 'Kettlebell Halo', 'sets' => 2, 'reps' => 10, 'restTime' => 60],
                 ['name' => 'Spider-Man Push-Up', 'sets' => 4, 'reps' => 8, 'restTime' => 120],
@@ -292,8 +292,8 @@ class WorkoutPlansSeeder extends Seeder
         $this->createWorkout([
             'name' => 'Avancé - Pull (Traction)',
             'description' => 'Développement maximal du dos et des biceps',
-            'category' => 'strength',
-            'difficulty_level' => 'advanced',
+            'type' => 'strength',
+            'difficulty' => 'advanced',
             'exercises' => [
                 ['name' => '90:90 Hip Crossover', 'sets' => 2, 'duration' => 45, 'restTime' => 30],
                 ['name' => 'Pull-Up Wide Grip', 'sets' => 4, 'reps' => 6, 'restTime' => 150],
@@ -309,8 +309,8 @@ class WorkoutPlansSeeder extends Seeder
         $this->createWorkout([
             'name' => 'Avancé - Legs (Jambes)',
             'description' => 'Entraînement intense pour jambes et fessiers',
-            'category' => 'strength',
-            'difficulty_level' => 'advanced',
+            'type' => 'strength',
+            'difficulty' => 'advanced',
             'exercises' => [
                 ['name' => '90:90 Hip Crossover', 'sets' => 2, 'duration' => 60, 'restTime' => 30],
                 ['name' => 'Double Kettlebell Front Squat', 'sets' => 4, 'reps' => 10, 'restTime' => 135],
@@ -327,8 +327,8 @@ class WorkoutPlansSeeder extends Seeder
         $this->createWorkout([
             'name' => 'Avancé - Beast Mode',
             'description' => 'Entraînement ultime pour athlètes confirmés',
-            'category' => 'strength',
-            'difficulty_level' => 'advanced',
+            'type' => 'strength',
+            'difficulty' => 'advanced',
             'exercises' => [
                 ['name' => 'Inchworm', 'sets' => 3, 'reps' => 8, 'restTime' => 60],
                 ['name' => 'Spider-Man Push-Up', 'sets' => 4, 'reps' => 10, 'restTime' => 90],
@@ -345,8 +345,8 @@ class WorkoutPlansSeeder extends Seeder
         $this->createWorkout([
             'name' => 'Avancé - HIIT Extrême',
             'description' => 'Cardio haute intensité pour condition physique ultime',
-            'category' => 'hiit',
-            'difficulty_level' => 'advanced',
+            'type' => 'hiit',
+            'difficulty' => 'advanced',
             'exercises' => [
                 ['name' => '90:90 Hip Crossover', 'sets' => 1, 'duration' => 60, 'restTime' => 0],
                 ['name' => 'Inchworm', 'sets' => 5, 'duration' => 45, 'restTime' => 15],
@@ -367,8 +367,8 @@ class WorkoutPlansSeeder extends Seeder
         $this->createWorkout([
             'name' => 'Perte de Poids - Version Légère',
             'description' => 'Programme doux pour débuter la perte de poids',
-            'category' => 'hiit',
-            'difficulty_level' => 'beginner',
+            'type' => 'hiit',
+            'difficulty' => 'beginner',
             'is_public' => true,
             'exercises' => [
                 ['name' => '90:90 Hip Crossover', 'sets' => 2, 'duration' => 60, 'restTime' => 20],
@@ -387,8 +387,8 @@ class WorkoutPlansSeeder extends Seeder
         $this->createWorkout([
             'name' => 'Perte de Poids - Mode Régulier',
             'description' => 'Entraînement équilibré pour une perte de poids progressive',
-            'category' => 'hiit',
-            'difficulty_level' => 'intermediate',
+            'type' => 'hiit',
+            'difficulty' => 'intermediate',
             'is_public' => true,
             'exercises' => [
                 ['name' => '90:90 Hip Crossover', 'sets' => 2, 'duration' => 45, 'restTime' => 15],
@@ -411,8 +411,8 @@ class WorkoutPlansSeeder extends Seeder
         $this->createWorkout([
             'name' => 'Perte de Poids - Mode Intensif',
             'description' => 'Programme haute intensité pour maximiser la combustion',
-            'category' => 'hiit',
-            'difficulty_level' => 'advanced',
+            'type' => 'hiit',
+            'difficulty' => 'advanced',
             'is_public' => true,
             'exercises' => [
                 ['name' => '90:90 Hip Crossover', 'sets' => 2, 'duration' => 45, 'restTime' => 10],
@@ -442,8 +442,8 @@ class WorkoutPlansSeeder extends Seeder
         $this->createWorkout([
             'name' => 'Mobilité & Récupération',
             'description' => 'Session complète de mobilité et d\'étirements',
-            'category' => 'flexibility',
-            'difficulty_level' => 'beginner',
+            'type' => 'flexibility',
+            'difficulty' => 'beginner',
             'exercises' => [
                 ['name' => '90:90 Hip Crossover', 'sets' => 3, 'duration' => 60, 'restTime' => 30],
                 ['name' => 'Dynamic Pigeon', 'sets' => 3, 'duration' => 90, 'restTime' => 45],
@@ -458,8 +458,8 @@ class WorkoutPlansSeeder extends Seeder
         $this->createWorkout([
             'name' => 'Spécial Kettlebell',
             'description' => 'Entraînement centré sur les kettlebells',
-            'category' => 'strength',
-            'difficulty_level' => 'intermediate',
+            'type' => 'strength',
+            'difficulty' => 'intermediate',
             'exercises' => [
                 ['name' => '90:90 Hip Crossover', 'sets' => 2, 'duration' => 45, 'restTime' => 30],
                 ['name' => 'Kettlebell Halo', 'sets' => 3, 'reps' => 10, 'restTime' => 75],
@@ -474,8 +474,8 @@ class WorkoutPlansSeeder extends Seeder
         $this->createWorkout([
             'name' => 'Express 15 Minutes',
             'description' => 'Entraînement rapide et efficace pour les journées chargées',
-            'category' => 'cardio',
-            'difficulty_level' => 'intermediate',
+            'type' => 'cardio',
+            'difficulty' => 'intermediate',
             'exercises' => [
                 ['name' => '90:90 Hip Crossover', 'sets' => 1, 'duration' => 30, 'restTime' => 0],
                 ['name' => 'Push-Up', 'sets' => 3, 'reps' => 8, 'restTime' => 30],
@@ -490,8 +490,8 @@ class WorkoutPlansSeeder extends Seeder
         $this->createWorkout([
             'name' => 'Sans Équipement',
             'description' => 'Entraînement complet au poids du corps sans matériel',
-            'category' => 'strength',
-            'difficulty_level' => 'intermediate',
+            'type' => 'strength',
+            'difficulty' => 'intermediate',
             'exercises' => [
                 ['name' => '90:90 Hip Crossover', 'sets' => 1, 'duration' => 60, 'restTime' => 0],
                 ['name' => 'Push-Up Wide Grip', 'sets' => 3, 'reps' => 10, 'restTime' => 75],
@@ -517,8 +517,8 @@ class WorkoutPlansSeeder extends Seeder
         // Calculate estimates
         $processedData = $this->processExercises($exerciseData);
         
-        $data['duration_minutes'] = $processedData['estimated_duration'];
-        $data['calories_burned'] = $processedData['estimated_calories'];
+        $data['estimated_duration'] = $processedData['estimated_duration'];
+        $data['estimated_calories'] = $processedData['estimated_calories'];
 
         $workout = Workout::create($data);
 
@@ -572,7 +572,7 @@ class WorkoutPlansSeeder extends Seeder
                 $restDuration = (($exerciseInfo['restTime'] ?? 60) * (($exerciseInfo['sets'] ?? 1) - 1)) / 60;
                 
                 $totalDuration += $exerciseDuration + $restDuration;
-                $totalCalories += $exerciseDuration * ($exercise->estimated_calories_per_minute ?? 5);
+                $totalCalories += $exerciseDuration * ($exercise->estimated_calories ?? 5);
             } else {
                 $notFoundExercises[] = $exerciseInfo['name'];
             }
@@ -597,13 +597,13 @@ class WorkoutPlansSeeder extends Seeder
         
         $stats = [
             'Total' => $workouts->count(),
-            'Beginner' => $workouts->where('difficulty_level', 'beginner')->count(),
-            'Intermediate' => $workouts->where('difficulty_level', 'intermediate')->count(),
-            'Advanced' => $workouts->where('difficulty_level', 'advanced')->count(),
-            'Strength' => $workouts->where('category', 'strength')->count(),
-            'Cardio' => $workouts->where('category', 'cardio')->count(),
-            'HIIT' => $workouts->where('category', 'hiit')->count(),
-            'Flexibility' => $workouts->where('category', 'flexibility')->count(),
+            'Beginner' => $workouts->where('difficulty', 'beginner')->count(),
+            'Intermediate' => $workouts->where('difficulty', 'intermediate')->count(),
+            'Advanced' => $workouts->where('difficulty', 'advanced')->count(),
+            'Strength' => $workouts->where('type', 'strength')->count(),
+            'Cardio' => $workouts->where('type', 'cardio')->count(),
+            'HIIT' => $workouts->where('type', 'hiit')->count(),
+            'Flexibility' => $workouts->where('type', 'flexibility')->count(),
         ];
         
         echo "\n📊 Workout Plan Statistics for {$this->user->name}:\n";
@@ -611,8 +611,8 @@ class WorkoutPlansSeeder extends Seeder
             echo "   - {$key}: {$count}\n";
         }
         
-        $totalDuration = $workouts->sum('duration_minutes');
-        $totalCalories = $workouts->sum('calories_burned');
+        $totalDuration = $workouts->sum('estimated_duration');
+        $totalCalories = $workouts->sum('estimated_calories');
         
         echo "\n📈 Aggregated Data:\n";
         echo "   - Total Duration: {$totalDuration} minutes\n";
