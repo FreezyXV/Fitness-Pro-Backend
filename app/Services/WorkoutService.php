@@ -136,8 +136,8 @@ class WorkoutService
             if ($template) {
                 $data['name'] = $template->name;
                 $data['description'] = $template->description;
-                $data['category'] = $template->category;
-                $data['difficulty_level'] = $template->difficulty_level;
+                $data['type'] = $template->type;
+                $data['difficulty'] = $template->difficulty;
             }
         }
 
@@ -178,7 +178,7 @@ class WorkoutService
         $updateData['actual_calories'] = $this->calorieCalculator->calculate(
             $updateData['actual_duration'], 
             $session->user->weight ?? 70, 
-            $session->template->category ?? 'general'
+            $session->template->type ?? 'general'
         );
 
         $session->update($updateData);

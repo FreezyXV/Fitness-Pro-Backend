@@ -51,18 +51,17 @@ class WorkoutController extends BaseController
                                       $q->where('user_id', $user->id)
                                         ->orWhere('user_id', config('app.system_user_id')); // Include system templates
                                   })
-                                  // Temporarily select all columns to avoid column name issues
-                                  // ->select([
-                                  //     'id', 'name', 'description', 'type', 'difficulty',
-                                  //     'estimated_duration', 'estimated_calories', 'user_id', 'is_template',
-                                  //     'is_public', 'created_at', 'updated_at'
-                                  // ])
+                                  ->select([
+                                      'id', 'name', 'description', 'type as category', 'difficulty as difficulty_level',
+                                      'estimated_duration', 'estimated_calories', 'user_id', 'is_template',
+                                      'created_at', 'updated_at'
+                                  ])
                                   ->with([
                                       'user:id,name,first_name' // Only eager load user data, not exercises for list view
                                   ])
                                   ->withCount('exercises'); // Get exercise count efficiently
 
-                    // Apply filters
+                    // Apply filters (using actual column names, not aliases)
                     if ($request->has('category') && $request->get('category') !== 'all') {
                         $query->where('type', $request->get('category'));
                     }
