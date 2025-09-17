@@ -14,21 +14,20 @@ class Exercise extends Model
         'body_part',
         'description',
         'muscle_groups',
-        'equipment_needed',
         'video_url',
         'duration',
         'difficulty',
         'instructions',
         'tips',
         'category',
-        'estimated_calories_per_minute',
+        'equipment',
+        'estimated_calories',
     ];
 
     protected $casts = [
         'muscle_groups' => 'array',
         'instructions' => 'array',
         'tips' => 'array',
-        'estimated_calories_per_minute' => 'integer',
         'duration' => 'integer',
     ];
 
@@ -207,8 +206,6 @@ class Exercise extends Model
         $array['bodyPart'] = $this->body_part;
         $array['videoUrl'] = $this->video_url;
         $array['muscleGroups'] = $this->muscle_groups;
-        $array['equipmentNeeded'] = $this->equipment_needed;
-        $array['estimatedCaloriesPerMinute'] = $this->estimated_calories_per_minute;
         
         return $array;
     }
