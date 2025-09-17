@@ -298,7 +298,7 @@ Route::get('/workouts/templates/public', function () {
     }
 })->name('workouts.templates.public');
 
-// Public individual workout template endpoint for portfolio visitors
+// Public individual workout template endpoint for portfolio visitors - force redeploy
 Route::get('/workouts/templates/public/{id}', function ($id) {
     try {
         \Log::info('Attempting to get public workout template: ' . $id);
