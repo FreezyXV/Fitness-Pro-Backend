@@ -369,7 +369,6 @@ class WorkoutPlansSeeder extends Seeder
             'description' => 'Programme doux pour débuter la perte de poids',
             'type' => 'hiit',
             'difficulty' => 'beginner',
-            'is_public' => true,
             'exercises' => [
                 ['name' => '90:90 Hip Crossover', 'sets' => 2, 'duration' => 60, 'restTime' => 20],
                 ['name' => 'Inchworm', 'sets' => 2, 'reps' => 4, 'restTime' => 30],
@@ -389,7 +388,6 @@ class WorkoutPlansSeeder extends Seeder
             'description' => 'Entraînement équilibré pour une perte de poids progressive',
             'type' => 'hiit',
             'difficulty' => 'intermediate',
-            'is_public' => true,
             'exercises' => [
                 ['name' => '90:90 Hip Crossover', 'sets' => 2, 'duration' => 45, 'restTime' => 15],
                 ['name' => 'Inchworm', 'sets' => 3, 'reps' => 6, 'restTime' => 30],
@@ -413,7 +411,6 @@ class WorkoutPlansSeeder extends Seeder
             'description' => 'Programme haute intensité pour maximiser la combustion',
             'type' => 'hiit',
             'difficulty' => 'advanced',
-            'is_public' => true,
             'exercises' => [
                 ['name' => '90:90 Hip Crossover', 'sets' => 2, 'duration' => 45, 'restTime' => 10],
                 ['name' => 'Inchworm', 'sets' => 3, 'reps' => 8, 'restTime' => 20],
