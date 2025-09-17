@@ -79,7 +79,7 @@ class GoalController extends BaseController
             $user = $this->getAuthenticatedUser();
 
             $validated = $this->goalsService->validateGoalData($request, true);
-            $goal = $this->goalsService->updateGoal($user, $id, $validated);
+            $goal = $this->goalsService->updateGoal($user, (int) $id, $validated);
             
             return $this->successResponse($goal->toArray(), 'Goal updated successfully');
 
@@ -99,7 +99,7 @@ class GoalController extends BaseController
             if ($authCheck) return $authCheck;
 
             $user = $this->getAuthenticatedUser();
-            $goal = $this->goalsService->getGoal($user, $id);
+            $goal = $this->goalsService->getGoal($user, (int) $id);
             
             return $this->successResponse($goal->toArray(), 'Goal retrieved successfully');
 
@@ -119,7 +119,7 @@ class GoalController extends BaseController
             if ($authCheck) return $authCheck;
 
             $user = $this->getAuthenticatedUser();
-            $this->goalsService->deleteGoal($user, $id);
+            $this->goalsService->deleteGoal($user, (int) $id);
             
             return $this->successResponse(null, 'Goal deleted successfully');
 
@@ -142,7 +142,7 @@ class GoalController extends BaseController
             $validated = $request->validate([
                 'progress_value' => 'required|numeric|min:0',
             ]);
-            $goal = $this->goalsService->updateGoalProgress($user, $id, $validated['progress_value']);
+            $goal = $this->goalsService->updateGoalProgress($user, (int) $id, $validated['progress_value']);
             
             return $this->successResponse($goal->toArray(), 'Goal progress updated successfully');
 
@@ -162,7 +162,7 @@ class GoalController extends BaseController
             if ($authCheck) return $authCheck;
 
             $user = $this->getAuthenticatedUser();
-            $goal = $this->goalsService->markGoalComplete($user, $id);
+            $goal = $this->goalsService->markGoalComplete($user, (int) $id);
             
             return $this->successResponse($goal->toArray(), 'Goal marked as complete');
 
@@ -182,7 +182,7 @@ class GoalController extends BaseController
             if ($authCheck) return $authCheck;
 
             $user = $this->getAuthenticatedUser();
-            $goal = $this->goalsService->activateGoal($user, $id);
+            $goal = $this->goalsService->activateGoal($user, (int) $id);
             
             return $this->successResponse($goal->toArray(), 'Goal activated');
 
@@ -202,7 +202,7 @@ class GoalController extends BaseController
             if ($authCheck) return $authCheck;
 
             $user = $this->getAuthenticatedUser();
-            $goal = $this->goalsService->pauseGoal($user, $id);
+            $goal = $this->goalsService->pauseGoal($user, (int) $id);
             
             return $this->successResponse($goal->toArray(), 'Goal paused');
 
@@ -222,7 +222,7 @@ class GoalController extends BaseController
             if ($authCheck) return $authCheck;
 
             $user = $this->getAuthenticatedUser();
-            $goal = $this->goalsService->resetGoal($user, $id);
+            $goal = $this->goalsService->resetGoal($user, (int) $id);
             
             return $this->successResponse($goal->toArray(), 'Goal reset successfully');
 
