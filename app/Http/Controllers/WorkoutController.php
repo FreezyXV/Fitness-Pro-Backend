@@ -52,8 +52,8 @@ class WorkoutController extends BaseController
                                         ->orWhere('user_id', config('app.system_user_id')); // Include system templates
                                   })
                                   ->select([
-                                      'id', 'name', 'description', 'category', 'difficulty_level',
-                                      'actual_duration', 'actual_calories', 'user_id', 'is_template',
+                                      'id', 'name', 'description', 'type', 'difficulty',
+                                      'estimated_duration', 'estimated_calories', 'user_id', 'is_template',
                                       'is_public', 'created_at', 'updated_at'
                                   ])
                                   ->with([
@@ -63,11 +63,11 @@ class WorkoutController extends BaseController
 
                     // Apply filters
                     if ($request->has('category') && $request->get('category') !== 'all') {
-                        $query->where('category', $request->get('category'));
+                        $query->where('type', $request->get('category'));
                     }
 
                     if ($request->has('difficulty') && $request->get('difficulty') !== 'all') {
-                        $query->where('difficulty_level', $request->get('difficulty'));
+                        $query->where('difficulty', $request->get('difficulty'));
                     }
 
                     if ($request->has('search') && !empty($request->get('search'))) {
