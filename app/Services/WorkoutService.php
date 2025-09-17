@@ -176,9 +176,9 @@ class WorkoutService
         $updateData['actual_duration'] = $completionData['actual_duration'] ?? $updateData['actual_duration'] ?? 0;
 
         $updateData['actual_calories'] = $this->calorieCalculator->calculate(
-            $updateData['actual_duration'], 
-            $session->user->weight ?? 70, 
-            $session->template->type ?? 'general'
+            $updateData['actual_duration'],
+            $session->user->weight ?? 70,
+            ($session->template ? $session->template->type : null) ?? 'general'
         );
 
         $session->update($updateData);
