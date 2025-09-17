@@ -33,8 +33,8 @@ class Workout extends Model
         'status',
         'started_at',
         'completed_at',
-        'duration_minutes',
-        'calories_burned',
+        'actual_duration',
+        'actual_calories',
         'notes',
         'is_public',
     ];
@@ -44,8 +44,8 @@ class Workout extends Model
         'is_public' => 'boolean',
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
-        'duration_minutes' => 'integer',
-        'calories_burned' => 'integer',
+        'actual_duration' => 'integer',
+        'actual_calories' => 'integer',
         'body_focus' => 'string',
         'type' => 'string',
         'intensity' => 'string',
@@ -220,18 +220,18 @@ class Workout extends Model
 
     public function getFormattedDurationAttribute(): string
     {
-        if (!$this->duration_minutes) {
+        if (!$this->actual_duration) {
             return '0 min';
         }
 
-        $hours = intval($this->duration_minutes / 60);
-        $minutes = $this->duration_minutes % 60;
+        $hours = intval($this->actual_duration / 60);
+        $minutes = $this->actual_duration % 60;
 
         if ($hours > 0) {
             return "{$hours}h {$minutes}min";
         }
 
-        return "{$this->duration_minutes} min";
+        return "{$this->actual_duration} min";
     }
 
     public function getDifficultyInfoAttribute(): array
@@ -273,8 +273,8 @@ class Workout extends Model
     public function getEstimatedDurationAttribute(): int
     {
         // If duration is already set, return it
-        if ($this->duration_minutes) {
-            return $this->duration_minutes;
+        if ($this->actual_duration) {
+            return $this->actual_duration;
         }
 
         // Otherwise, calculate from exercises
@@ -284,8 +284,8 @@ class Workout extends Model
     public function getEstimatedCaloriesAttribute(): int
     {
         // If calories are already set, return them
-        if ($this->calories_burned) {
-            return $this->calories_burned;
+        if ($this->actual_calories) {
+            return $this->actual_calories;
         }
 
         // Otherwise, calculate based on estimated duration and intensity
@@ -414,8 +414,8 @@ class Workout extends Model
 
         // Manual conversion to camelCase for specific fields that matter
         $camelCaseMapping = [
-            'duration_minutes' => 'durationMinutes',
-            'calories_burned' => 'caloriesBurned',
+            'actual_duration' => 'durationMinutes',
+            'actual_calories' => 'caloriesBurned',
             'user_id' => 'userId',
             'template_id' => 'templateId',
             'difficulty_level' => 'difficultyLevel',

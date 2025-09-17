@@ -89,6 +89,215 @@ Route::get('/version', function() {
     ]);
 })->name('api.version');
 
+// Public endpoint to run migrations (temporary)
+Route::post('/run-migrations', function () {
+    try {
+        \Artisan::call('migrate', ['--force' => true]);
+        return response()->json([
+            'success' => true,
+            'message' => 'Migrations ran successfully',
+            'output' => \Artisan::output()
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to run migrations: ' . $e->getMessage()
+        ], 500);
+    }
+})->name('run.migrations');
+
+// Test endpoint to check video URL insertion
+Route::post('/test-video-insert', function () {
+    try {
+        $exercise = \App\Models\Exercise::create([
+            'name' => 'Test Exercise',
+            'body_part' => 'chest',
+            'category' => 'strength',
+            'muscle_groups' => ['chest'],
+            'difficulty' => 'beginner',
+            'instructions' => ['Test instruction'],
+            'duration' => 1,
+            'video_url' => 'https://www.youtube.com/watch?v=test123',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Test exercise created successfully',
+            'exercise' => $exercise
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to create test exercise: ' . $e->getMessage()
+        ], 500);
+    }
+})->name('test.video.insert');
+
+// Public endpoint to clear workouts for testing (temporary)
+Route::post('/clear-workouts-public', function () {
+    try {
+        \App\Models\Workout::truncate();
+        return response()->json([
+            'success' => true,
+            'message' => 'All workouts cleared successfully'
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to clear workouts: ' . $e->getMessage()
+        ], 500);
+    }
+})->name('clear.workouts.public');
+
+// Public endpoint to clear exercises for testing (temporary)
+Route::post('/clear-exercises-public', function () {
+    try {
+        \App\Models\Exercise::truncate();
+        return response()->json([
+            'success' => true,
+            'message' => 'All exercises cleared successfully'
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to clear exercises: ' . $e->getMessage()
+        ], 500);
+    }
+})->name('clear.exercises.public');
+
+// Public Portfolio Demo Seeding Endpoint for workouts
+Route::post('/workouts-portfolio-seed', function () {
+    try {
+        // Check if workouts already exist to avoid duplicate seeding
+        $workoutCount = \App\Models\Workout::count();
+        if ($workoutCount > 0) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Workout demo data already exists',
+                'workouts_count' => $workoutCount,
+                'status' => 'already_seeded'
+            ]);
+        }
+
+        // Get available exercises to use in workouts
+        $exercises = \App\Models\Exercise::take(12)->get();
+        if ($exercises->count() < 3) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Not enough exercises available. Please seed exercises first.',
+                'exercises_count' => $exercises->count()
+            ], 400);
+        }
+
+        // Demo workout templates for portfolio visitors (minimal fields only)
+        $workoutTemplates = [
+            [
+                'name' => 'Entraînement Force Débutant',
+                'description' => 'Programme de musculation parfait pour commencer',
+                'actual_duration' => 45,
+                'actual_calories' => 250,
+                'is_template' => true,
+                'user_id' => 1, // System user for demo data
+                'exercises' => [
+                    ['id' => $exercises[0]->id, 'sets' => 3, 'reps' => 12, 'rest_time_seconds' => 60],
+                    ['id' => $exercises[1]->id, 'sets' => 3, 'reps' => 10, 'rest_time_seconds' => 90],
+                    ['id' => $exercises[2]->id, 'sets' => 3, 'reps' => 15, 'rest_time_seconds' => 45],
+                ]
+            ],
+            [
+                'name' => 'HIIT Cardio Intense',
+                'description' => 'Entraînement cardio haute intensité',
+                'actual_duration' => 30,
+                'actual_calories' => 350,
+                'is_template' => true,
+                'user_id' => 1,
+                'exercises' => [
+                    ['id' => $exercises[8]->id, 'sets' => 4, 'reps' => 20, 'rest_time_seconds' => 30],
+                    ['id' => $exercises[9]->id, 'sets' => 3, 'reps' => 15, 'rest_time_seconds' => 45],
+                    ['id' => $exercises[7]->id, 'sets' => 1, 'reps' => 1, 'rest_time_seconds' => 0], // Running
+                ]
+            ],
+            [
+                'name' => 'Flexibilité et Étirements',
+                'description' => 'Routine de flexibilité pour récupération',
+                'actual_duration' => 25,
+                'actual_calories' => 120,
+                'is_template' => true,
+                'user_id' => 1,
+                'exercises' => [
+                    ['id' => $exercises[3]->id, 'sets' => 2, 'reps' => 12, 'rest_time_seconds' => 30],
+                    ['id' => $exercises[4]->id, 'sets' => 2, 'reps' => 10, 'rest_time_seconds' => 30],
+                ]
+            ],
+            [
+                'name' => 'Full Body Avancé',
+                'description' => 'Entraînement complet du corps pour niveau avancé',
+                'actual_duration' => 60,
+                'actual_calories' => 400,
+                'is_template' => true,
+                'user_id' => 1,
+                'exercises' => [
+                    ['id' => $exercises[5]->id, 'sets' => 4, 'reps' => 8, 'rest_time_seconds' => 120],
+                    ['id' => $exercises[9]->id, 'sets' => 3, 'reps' => 12, 'rest_time_seconds' => 90],
+                    ['id' => $exercises[10]->id, 'sets' => 3, 'reps' => 10, 'rest_time_seconds' => 90],
+                    ['id' => $exercises[11]->id, 'sets' => 3, 'reps' => 12, 'rest_time_seconds' => 75],
+                ]
+            ],
+        ];
+
+        $inserted = 0;
+        foreach ($workoutTemplates as $templateData) {
+            // Remove exercises for now since pivot table schema is incompatible
+            unset($templateData['exercises']);
+
+            // Create the workout template
+            $workout = \App\Models\Workout::create($templateData);
+            $inserted++;
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Workout portfolio demo data seeded successfully',
+            'workouts_created' => $inserted,
+            'status' => 'freshly_seeded'
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to seed workout portfolio demo data: ' . $e->getMessage(),
+            'error' => $e->getTraceAsString()
+        ], 500);
+    }
+})->name('workouts.portfolio.seed');
+
+// Public workout templates endpoint for portfolio visitors
+Route::get('/workouts/templates/public', function () {
+    try {
+        \Log::info('Attempting to get public workout templates');
+
+        $templates = \App\Models\Workout::orderBy('created_at', 'desc')
+            ->get();
+
+        \Log::info('Found templates: ' . $templates->count());
+
+        return response()->json([
+            'success' => true,
+            'data' => $templates,
+            'message' => 'Public workout templates retrieved successfully'
+        ]);
+    } catch (\Exception $e) {
+        \Log::error('Error getting public workout templates: ' . $e->getMessage());
+        \Log::error('Stack trace: ' . $e->getTraceAsString());
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to get public workout templates: ' . $e->getMessage(),
+            'error' => $e->getTraceAsString()
+        ], 500);
+    }
+})->name('workouts.templates.public');
+
 // Public Portfolio Demo Seeding Endpoint (for portfolio visitors)
 Route::post('/portfolio-seed', function () {
     try {
@@ -103,27 +312,27 @@ Route::post('/portfolio-seed', function () {
             ]);
         }
 
-        // Direct database seeding (production-safe)
+        // Direct database seeding (production-safe) with video support
         $exercises = [
             // CHEST EXERCISES
-            ['name' => 'Push-ups', 'body_part' => 'chest', 'category' => 'strength', 'muscle_groups' => ['chest', 'triceps', 'shoulders'], 'equipment' => 'bodyweight', 'difficulty' => 'beginner', 'instructions' => ['Start in plank position', 'Lower body until chest nearly touches ground', 'Push back up to starting position'], 'duration' => 1, 'estimated_calories' => 5],
-            ['name' => 'Bench Press', 'body_part' => 'chest', 'category' => 'strength', 'muscle_groups' => ['chest', 'triceps', 'shoulders'], 'equipment' => 'barbell', 'difficulty' => 'intermediate', 'instructions' => ['Lie on bench with barbell above chest', 'Lower barbell to chest with control', 'Press back up to starting position'], 'duration' => 1, 'estimated_calories' => 8],
-            ['name' => 'Incline Dumbbell Press', 'body_part' => 'chest', 'category' => 'strength', 'muscle_groups' => ['chest', 'shoulders'], 'equipment' => 'dumbbells', 'difficulty' => 'intermediate', 'instructions' => ['Lie on incline bench with dumbbells', 'Press dumbbells up and together', 'Lower with control to starting position'], 'duration' => 1, 'estimated_calories' => 7],
+            ['name' => 'Push-ups', 'body_part' => 'chest', 'category' => 'strength', 'muscle_groups' => ['chest', 'triceps', 'shoulders'], 'equipment' => 'bodyweight', 'difficulty' => 'beginner', 'instructions' => ['Start in plank position', 'Lower body until chest nearly touches ground', 'Push back up to starting position'], 'duration' => 1, 'estimated_calories' => 5, 'video_url' => 'https://www.youtube.com/watch?v=IODxDxX7oi4', 'thumbnail_url' => 'https://img.youtube.com/vi/IODxDxX7oi4/maxresdefault.jpg'],
+            ['name' => 'Bench Press', 'body_part' => 'chest', 'category' => 'strength', 'muscle_groups' => ['chest', 'triceps', 'shoulders'], 'equipment' => 'barbell', 'difficulty' => 'intermediate', 'instructions' => ['Lie on bench with barbell above chest', 'Lower barbell to chest with control', 'Press back up to starting position'], 'duration' => 1, 'estimated_calories' => 8, 'video_url' => 'https://www.youtube.com/watch?v=rT7DgCr-3pg', 'thumbnail_url' => 'https://img.youtube.com/vi/rT7DgCr-3pg/maxresdefault.jpg'],
+            ['name' => 'Incline Dumbbell Press', 'body_part' => 'chest', 'category' => 'strength', 'muscle_groups' => ['chest', 'shoulders'], 'equipment' => 'dumbbells', 'difficulty' => 'intermediate', 'instructions' => ['Lie on incline bench with dumbbells', 'Press dumbbells up and together', 'Lower with control to starting position'], 'duration' => 1, 'estimated_calories' => 7, 'video_url' => 'https://www.youtube.com/watch?v=8iPEnn-ltC8', 'thumbnail_url' => 'https://img.youtube.com/vi/8iPEnn-ltC8/maxresdefault.jpg'],
 
             // LEG EXERCISES
-            ['name' => 'Squats', 'body_part' => 'legs', 'category' => 'strength', 'muscle_groups' => ['quadriceps', 'glutes', 'calves'], 'equipment' => 'bodyweight', 'difficulty' => 'beginner', 'instructions' => ['Stand with feet shoulder-width apart', 'Lower hips back and down', 'Return to standing position'], 'duration' => 1, 'estimated_calories' => 6],
-            ['name' => 'Lunges', 'body_part' => 'legs', 'category' => 'strength', 'muscle_groups' => ['quadriceps', 'glutes', 'hamstrings'], 'equipment' => 'bodyweight', 'difficulty' => 'beginner', 'instructions' => ['Step forward into lunge position', 'Lower back knee toward ground', 'Return to starting position'], 'duration' => 1, 'estimated_calories' => 5],
-            ['name' => 'Deadlifts', 'body_part' => 'legs', 'category' => 'strength', 'muscle_groups' => ['hamstrings', 'glutes', 'back'], 'equipment' => 'barbell', 'difficulty' => 'advanced', 'instructions' => ['Stand with barbell at feet', 'Hip hinge movement to lift barbell', 'Return to ground with control'], 'duration' => 1, 'estimated_calories' => 10],
+            ['name' => 'Squats', 'body_part' => 'legs', 'category' => 'strength', 'muscle_groups' => ['quadriceps', 'glutes', 'calves'], 'equipment' => 'bodyweight', 'difficulty' => 'beginner', 'instructions' => ['Stand with feet shoulder-width apart', 'Lower hips back and down', 'Return to standing position'], 'duration' => 1, 'estimated_calories' => 6, 'video_url' => 'https://www.youtube.com/watch?v=aclHkVaku9U', 'thumbnail_url' => 'https://img.youtube.com/vi/aclHkVaku9U/maxresdefault.jpg'],
+            ['name' => 'Lunges', 'body_part' => 'legs', 'category' => 'strength', 'muscle_groups' => ['quadriceps', 'glutes', 'hamstrings'], 'equipment' => 'bodyweight', 'difficulty' => 'beginner', 'instructions' => ['Step forward into lunge position', 'Lower back knee toward ground', 'Return to starting position'], 'duration' => 1, 'estimated_calories' => 5, 'video_url' => 'https://www.youtube.com/watch?v=QOVaHwm-Q6U', 'thumbnail_url' => 'https://img.youtube.com/vi/QOVaHwm-Q6U/maxresdefault.jpg'],
+            ['name' => 'Deadlifts', 'body_part' => 'legs', 'category' => 'strength', 'muscle_groups' => ['hamstrings', 'glutes', 'back'], 'equipment' => 'barbell', 'difficulty' => 'advanced', 'instructions' => ['Stand with barbell at feet', 'Hip hinge movement to lift barbell', 'Return to ground with control'], 'duration' => 1, 'estimated_calories' => 10, 'video_url' => 'https://www.youtube.com/watch?v=XxWcirHIwVo', 'thumbnail_url' => 'https://img.youtube.com/vi/XxWcirHIwVo/maxresdefault.jpg'],
 
             // CARDIO EXERCISES
-            ['name' => 'Running', 'body_part' => 'cardio', 'category' => 'cardio', 'muscle_groups' => ['legs', 'core'], 'equipment' => null, 'difficulty' => 'intermediate', 'instructions' => ['Maintain steady pace', 'Land on midfoot', 'Keep upright posture'], 'duration' => 30, 'estimated_calories' => 300],
-            ['name' => 'Jump Rope', 'body_part' => 'cardio', 'category' => 'cardio', 'muscle_groups' => ['legs', 'shoulders', 'core'], 'equipment' => 'jump_rope', 'difficulty' => 'intermediate', 'instructions' => ['Jump with both feet', 'Rotate rope with wrists', 'Keep light on feet'], 'duration' => 10, 'estimated_calories' => 100],
-            ['name' => 'Burpees', 'body_part' => 'cardio', 'category' => 'cardio', 'muscle_groups' => ['full_body'], 'equipment' => 'bodyweight', 'difficulty' => 'advanced', 'instructions' => ['Start standing', 'Squat and jump back to plank', 'Push-up, jump forward, jump up'], 'duration' => 1, 'estimated_calories' => 12],
+            ['name' => 'Running', 'body_part' => 'cardio', 'category' => 'cardio', 'muscle_groups' => ['legs', 'core'], 'equipment' => null, 'difficulty' => 'intermediate', 'instructions' => ['Maintain steady pace', 'Land on midfoot', 'Keep upright posture'], 'duration' => 30, 'estimated_calories' => 300, 'video_url' => 'https://www.youtube.com/watch?v=brFHyOtTwH4', 'thumbnail_url' => 'https://img.youtube.com/vi/brFHyOtTwH4/maxresdefault.jpg'],
+            ['name' => 'Jump Rope', 'body_part' => 'cardio', 'category' => 'cardio', 'muscle_groups' => ['legs', 'shoulders', 'core'], 'equipment' => 'jump_rope', 'difficulty' => 'intermediate', 'instructions' => ['Jump with both feet', 'Rotate rope with wrists', 'Keep light on feet'], 'duration' => 10, 'estimated_calories' => 100, 'video_url' => 'https://www.youtube.com/watch?v=1BZM2Vre5oc', 'thumbnail_url' => 'https://img.youtube.com/vi/1BZM2Vre5oc/maxresdefault.jpg'],
+            ['name' => 'Burpees', 'body_part' => 'cardio', 'category' => 'cardio', 'muscle_groups' => ['full_body'], 'equipment' => 'bodyweight', 'difficulty' => 'advanced', 'instructions' => ['Start standing', 'Squat and jump back to plank', 'Push-up, jump forward, jump up'], 'duration' => 1, 'estimated_calories' => 12, 'video_url' => 'https://www.youtube.com/watch?v=TU8QYVW0gDU', 'thumbnail_url' => 'https://img.youtube.com/vi/TU8QYVW0gDU/maxresdefault.jpg'],
 
             // BACK EXERCISES
-            ['name' => 'Pull-ups', 'body_part' => 'back', 'category' => 'strength', 'muscle_groups' => ['back', 'biceps'], 'equipment' => 'pull_up_bar', 'difficulty' => 'intermediate', 'instructions' => ['Hang from bar with arms extended', 'Pull body up until chin over bar', 'Lower with control'], 'duration' => 1, 'estimated_calories' => 8],
-            ['name' => 'Bent-over Rows', 'body_part' => 'back', 'category' => 'strength', 'muscle_groups' => ['back', 'biceps'], 'equipment' => 'barbell', 'difficulty' => 'intermediate', 'instructions' => ['Bend at hips with barbell', 'Pull barbell to lower chest', 'Lower with control'], 'duration' => 1, 'estimated_calories' => 7],
-            ['name' => 'Lat Pulldowns', 'body_part' => 'back', 'category' => 'strength', 'muscle_groups' => ['back', 'biceps'], 'equipment' => 'cable_machine', 'difficulty' => 'beginner', 'instructions' => ['Sit at cable machine', 'Pull cable bar down to upper chest', 'Return with control'], 'duration' => 1, 'estimated_calories' => 6],
+            ['name' => 'Pull-ups', 'body_part' => 'back', 'category' => 'strength', 'muscle_groups' => ['back', 'biceps'], 'equipment' => 'pull_up_bar', 'difficulty' => 'intermediate', 'instructions' => ['Hang from bar with arms extended', 'Pull body up until chin over bar', 'Lower with control'], 'duration' => 1, 'estimated_calories' => 8, 'video_url' => 'https://www.youtube.com/watch?v=eGo4IYlbE5g', 'thumbnail_url' => 'https://img.youtube.com/vi/eGo4IYlbE5g/maxresdefault.jpg'],
+            ['name' => 'Bent-over Rows', 'body_part' => 'back', 'category' => 'strength', 'muscle_groups' => ['back', 'biceps'], 'equipment' => 'barbell', 'difficulty' => 'intermediate', 'instructions' => ['Bend at hips with barbell', 'Pull barbell to lower chest', 'Lower with control'], 'duration' => 1, 'estimated_calories' => 7, 'video_url' => 'https://www.youtube.com/watch?v=FWJR5Ve8bnQ', 'thumbnail_url' => 'https://img.youtube.com/vi/FWJR5Ve8bnQ/maxresdefault.jpg'],
+            ['name' => 'Lat Pulldowns', 'body_part' => 'back', 'category' => 'strength', 'muscle_groups' => ['back', 'biceps'], 'equipment' => 'cable_machine', 'difficulty' => 'beginner', 'instructions' => ['Sit at cable machine', 'Pull cable bar down to upper chest', 'Return with control'], 'duration' => 1, 'estimated_calories' => 6, 'video_url' => 'https://www.youtube.com/watch?v=CAwf7n6Luuc', 'thumbnail_url' => 'https://img.youtube.com/vi/CAwf7n6Luuc/maxresdefault.jpg'],
         ];
 
         $inserted = 0;
@@ -133,11 +342,10 @@ Route::post('/portfolio-seed', function () {
                 'body_part' => $exercise['body_part'],
                 'category' => $exercise['category'],
                 'muscle_groups' => $exercise['muscle_groups'],
-                'equipment' => $exercise['equipment'],
                 'difficulty' => $exercise['difficulty'],
                 'instructions' => $exercise['instructions'],
                 'duration' => $exercise['duration'],
-                'estimated_calories' => $exercise['estimated_calories'],
+                'video_url' => $exercise['video_url'] ?? null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -463,6 +671,22 @@ if (config('app.debug') && config('app.env') !== 'production') {
             }
         })->name('seed.exercises');
         
+        // NEW: Clear and reseed exercises (development only)
+        Route::post('/clear-exercises', function () {
+            try {
+                \App\Models\Exercise::truncate();
+                return response()->json([
+                    'success' => true,
+                    'message' => 'All exercises cleared successfully'
+                ]);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to clear exercises: ' . $e->getMessage()
+                ], 500);
+            }
+        })->name('clear.exercises');
+
         // NEW: Database status check
         Route::get('/database', function () {
             try {

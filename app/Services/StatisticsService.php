@@ -30,14 +30,14 @@ class StatisticsService
             
             $baseStats = [
                 'total_sessions' => $sessions->count(),
-                'total_minutes' => $sessions->sum('duration_minutes') ?? 0,
-                'total_calories' => $sessions->sum('calories_burned') ?? 0,
-                'average_duration' => round($sessions->avg('duration_minutes') ?? 0, 1),
-                'average_calories' => round($sessions->avg('calories_burned') ?? 0, 1),
+                'total_minutes' => $sessions->sum('actual_duration') ?? 0,
+                'total_calories' => $sessions->sum('actual_calories') ?? 0,
+                'average_duration' => round($sessions->avg('actual_duration') ?? 0, 1),
+                'average_calories' => round($sessions->avg('actual_calories') ?? 0, 1),
                 'this_week' => $this->getWeeklyCount($user),
                 'this_month' => $this->getMonthlyCount($user),
-                'longest_session' => $sessions->max('duration_minutes') ?? 0,
-                'most_calories' => $sessions->max('calories_burned') ?? 0,
+                'longest_session' => $sessions->max('actual_duration') ?? 0,
+                'most_calories' => $sessions->max('actual_calories') ?? 0,
             ];
 
             return array_merge($baseStats, ['consistency' => $consistencyStats]);
@@ -58,7 +58,7 @@ class StatisticsService
                 ->where('is_template', false)
                 ->where('status', 'completed')
                 ->whereBetween('completed_at', [$startDate, $endDate])
-                ->selectRaw('DATE(completed_at) as date, COUNT(*) as sessions, SUM(duration_minutes) as minutes, SUM(calories_burned) as calories')
+                ->selectRaw('DATE(completed_at) as date, COUNT(*) as sessions, SUM(actual_duration) as minutes, SUM(actual_calories) as calories')
                 ->groupBy('date')
                 ->get()
                 ->keyBy('date');
@@ -165,7 +165,7 @@ class StatisticsService
             $totalCaloriesRank = User::whereHas('workouts', function ($q) use ($userStats) {
                 $q->where('status', 'completed')
                   ->where('is_template', false)
-                  ->havingRaw('SUM(calories_burned) > ?', [$userStats['total_calories']]);
+                  ->havingRaw('SUM(actual_calories) > ?', [$userStats['total_calories']]);
             })->count() + 1;
             
             $totalUsers = User::whereHas('workouts', function ($q) {
@@ -293,7 +293,7 @@ class StatisticsService
                 $month->copy()->startOfMonth(),
                 $month->copy()->endOfMonth()
             ])
-            ->selectRaw('COUNT(*) as sessions, SUM(duration_minutes) as minutes, SUM(calories_burned) as calories')
+            ->selectRaw('COUNT(*) as sessions, SUM(actual_duration) as minutes, SUM(actual_calories) as calories')
             ->first();
         
         return [

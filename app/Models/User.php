@@ -26,12 +26,15 @@ class User extends Authenticatable
         'weight',
         'gender',
         'phone',
+        'avatar',
         'profile_photo_url',
-        'date_of_birth',
         'location',
+        'birth_date',
+        'date_of_birth',
         'bio',
         'activity_level',
         'goals',
+        'blood_type',
         'blood_group',
         'preferences'
     ];
@@ -44,6 +47,7 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'birth_date' => 'date',
         'date_of_birth' => 'date',
         'goals' => 'array',
         'preferences' => 'array',
@@ -224,10 +228,10 @@ class User extends Authenticatable
                 ->where('status', 'completed')
                 ->selectRaw('
                     COUNT(*) as total_workouts,
-                    COALESCE(SUM(duration_minutes), 0) as total_minutes,
-                    COALESCE(SUM(calories_burned), 0) as total_calories,
-                    COALESCE(AVG(duration_minutes), 0) as avg_duration,
-                    COALESCE(AVG(calories_burned), 0) as avg_calories
+                    COALESCE(SUM(actual_duration), 0) as total_minutes,
+                    COALESCE(SUM(actual_calories), 0) as total_calories,
+                    COALESCE(AVG(actual_duration), 0) as avg_duration,
+                    COALESCE(AVG(actual_calories), 0) as avg_calories
                 ')
                 ->first();
 
@@ -572,7 +576,7 @@ class User extends Authenticatable
             return (int) $this->workoutSessions()
                 ->where('status', 'completed')
                 ->whereDate('completed_at', Carbon::today())
-                ->sum('calories_burned');
+                ->sum('actual_calories');
         } catch (\Exception $e) {
             Log::warning('Today calories calculation error', [
                 'user_id' => $this->id,

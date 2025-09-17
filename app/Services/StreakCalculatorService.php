@@ -347,8 +347,8 @@ class StreakCalculatorService
     {
         $totalSessions = $user->workouts()->where('is_template', false)->where('status', 'completed')->count();
         $currentStreak = $this->calculateWorkoutStreak($user);
-        $totalCalories = $user->workouts()->where('is_template', false)->where('status', 'completed')->sum('calories_burned');
-        $totalHours = $user->workouts()->where('is_template', false)->where('status', 'completed')->sum('duration_minutes') / 60;
+        $totalCalories = $user->workouts()->where('is_template', false)->where('status', 'completed')->sum('actual_calories');
+        $totalHours = $user->workouts()->where('is_template', false)->where('status', 'completed')->sum('actual_duration') / 60;
 
         $upcoming = [];
 
@@ -394,7 +394,7 @@ class StreakCalculatorService
         $stats = $user->workouts()
             ->where('is_template', false)
             ->where('status', 'completed')
-            ->selectRaw('COUNT(*) as total_sessions, SUM(calories_burned) as total_calories')
+            ->selectRaw('COUNT(*) as total_sessions, SUM(actual_calories) as total_calories')
             ->first();
         
         $currentStreak = $this->calculateWorkoutStreak($user);
@@ -453,7 +453,7 @@ class StreakCalculatorService
     {
         $totalSessions = $user->workouts()->where('is_template', false)->where('status', 'completed')->count();
         $currentStreak = $this->calculateWorkoutStreak($user);
-        $totalCalories = $user->workouts()->where('is_template', false)->where('status', 'completed')->sum('calories_burned');
+        $totalCalories = $user->workouts()->where('is_template', false)->where('status', 'completed')->sum('actual_calories');
 
         $nextSessionMilestone = null;
         $sessionMilestones = [1, 5, 10, 25, 50, 100, 250, 500, 1000];

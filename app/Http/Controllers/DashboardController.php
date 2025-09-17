@@ -32,6 +32,18 @@ class DashboardController extends BaseController
 
             try {
                 $dashboardData = $this->statisticsService->getDashboardStats($user);
+
+                // Add user profile information for sidebar/dashboard display
+                $dashboardData['user_profile'] = [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'avatar' => $user->avatar,
+                    'profile_photo_url' => $user->profile_photo_url,
+                    'first_name' => $user->first_name,
+                    'last_name' => $user->last_name,
+                ];
+
                 \Log::info('Dashboard data prepared successfully');
                 return $this->successResponse($dashboardData, 'Dashboard data loaded successfully');
 

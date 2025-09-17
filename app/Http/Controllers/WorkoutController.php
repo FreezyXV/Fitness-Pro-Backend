@@ -50,7 +50,7 @@ class WorkoutController extends BaseController
                                   })
                                   ->select([
                                       'id', 'name', 'description', 'category', 'difficulty_level',
-                                      'duration_minutes', 'calories_burned', 'user_id', 'is_template',
+                                      'actual_duration', 'actual_calories', 'user_id', 'is_template',
                                       'is_public', 'created_at', 'updated_at'
                                   ])
                                   ->with([
@@ -249,8 +249,8 @@ class WorkoutController extends BaseController
                         'exercises_count' => $template->exercises->count(),
                         'exercises_names' => $template->exercises->pluck('name')->toArray(),
                         'is_public' => $template->is_public,
-                        'duration_minutes' => $template->duration_minutes,
-                        'calories_burned' => $template->calories_burned,
+                        'actual_duration' => $template->actual_duration,
+                        'actual_calories' => $template->actual_calories,
                         'created_at' => $template->created_at->toISOString()
                     ];
                 })->toArray(),
@@ -324,8 +324,8 @@ class WorkoutController extends BaseController
                     'description' => 'Un programme de force parfait pour débuter',
                     'category' => 'strength',
                     'difficulty_level' => 'beginner',
-                    'duration_minutes' => 45,
-                    'calories_burned' => 200,
+                    'actual_duration' => 45,
+                    'actual_calories' => 200,
                     'is_public' => false
                 ],
                 [
@@ -333,8 +333,8 @@ class WorkoutController extends BaseController
                     'description' => 'Entraînement cardio haute intensité',
                     'category' => 'hiit',
                     'difficulty_level' => 'intermediate',
-                    'duration_minutes' => 30,
-                    'calories_burned' => 300,
+                    'actual_duration' => 30,
+                    'actual_calories' => 300,
                     'is_public' => true
                 ],
                 [
@@ -342,8 +342,8 @@ class WorkoutController extends BaseController
                     'description' => 'Améliorer la flexibilité et la mobilité',
                     'category' => 'flexibility',
                     'difficulty_level' => 'beginner',
-                    'duration_minutes' => 25,
-                    'calories_burned' => 100,
+                    'actual_duration' => 25,
+                    'actual_calories' => 100,
                     'is_public' => false
                 ]
             ];
@@ -605,8 +605,8 @@ class WorkoutController extends BaseController
             $validated = $request->validate([
                 'template_id' => 'nullable|exists:workouts,id',
                 'name' => 'required|string|max:255',
-                'duration_minutes' => 'required|integer|min:1',
-                'calories_burned' => 'nullable|integer|min:0',
+                'actual_duration' => 'required|integer|min:1',
+                'actual_calories' => 'nullable|integer|min:0',
                 'notes' => 'nullable|string',
                 'completed_at' => 'nullable|date',
                 'exercises' => 'nullable|array',
@@ -669,7 +669,7 @@ class WorkoutController extends BaseController
 
                 $validated = $request->validate([
                     'notes' => 'nullable|string',
-                    'duration_minutes' => 'sometimes|integer|min:1',
+                    'actual_duration' => 'sometimes|integer|min:1',
                     'exercises' => 'nullable|array',
                 ]);
 
