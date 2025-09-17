@@ -372,6 +372,26 @@ if (config('app.debug') && config('app.env') !== 'production') {
         
         // NEW: Force reseed templates for current user
         Route::post('/workouts/reseed', [WorkoutController::class, 'reseedUserTemplates'])->name('workouts.reseed');
+
+        // NEW: Seed exercises (development only)
+        Route::post('/seed-exercises', function () {
+            try {
+                \Artisan::call('db:seed', ['--class' => 'ExerciseSeeder']);
+                $exerciseCount = \App\Models\Exercise::count();
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Exercise seeder completed successfully',
+                    'exercises_created' => $exerciseCount,
+                    'output' => \Artisan::output()
+                ]);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to run exercise seeder: ' . $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ], 500);
+            }
+        })->name('seed.exercises');
         
         // NEW: Database status check
         Route::get('/database', function () {
