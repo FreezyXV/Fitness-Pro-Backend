@@ -298,6 +298,36 @@ Route::get('/workouts/templates/public', function () {
     }
 })->name('workouts.templates.public');
 
+// Public individual workout template endpoint for portfolio visitors
+Route::get('/workouts/templates/public/{id}', function ($id) {
+    try {
+        \Log::info('Attempting to get public workout template: ' . $id);
+
+        $template = \App\Models\Workout::with([
+            'exercises' => function($exerciseQuery) {
+                $exerciseQuery->orderBy('workout_exercises.order_index', 'asc');
+            }
+        ])->findOrFail($id);
+
+        \Log::info('Found template: ' . $template->name);
+
+        return response()->json([
+            'success' => true,
+            'data' => $template,
+            'message' => 'Public workout template retrieved successfully'
+        ]);
+    } catch (\Exception $e) {
+        \Log::error('Error getting public workout template: ' . $e->getMessage());
+        \Log::error('Stack trace: ' . $e->getTraceAsString());
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to get public workout template: ' . $e->getMessage(),
+            'error' => $e->getTraceAsString()
+        ], 500);
+    }
+})->where('id', '[0-9]+')->name('workouts.templates.public.show');
+
 // Public Portfolio Demo Seeding Endpoint (for portfolio visitors)
 Route::post('/portfolio-seed', function () {
     try {
