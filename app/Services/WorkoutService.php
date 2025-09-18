@@ -181,9 +181,12 @@ class WorkoutService
             ];
 
             if ($session->status === 'in_progress' && $session->started_at) {
-                $updateData['actual_duration'] = $session->started_at->diffInMinutes(now());
+                $updateData['actual_duration'] = (int) round($session->started_at->diffInMinutes(now()));
             }
             $updateData['actual_duration'] = $completionData['actual_duration'] ?? $updateData['actual_duration'] ?? 0;
+
+            // Ensure actual_duration is always an integer
+            $updateData['actual_duration'] = (int) $updateData['actual_duration'];
 
             // Safely calculate calories with fallback
             try {
@@ -216,11 +219,11 @@ class WorkoutService
                     $workoutType = $session->template->category ?? $session->template->type ?? 'general';
                 }
 
-                $updateData['actual_calories'] = $this->calorieCalculator->calculate(
+                $updateData['actual_calories'] = (int) round($this->calorieCalculator->calculate(
                     $updateData['actual_duration'],
                     $session->user->weight ?? 70,
                     $workoutType
-                );
+                ));
             } catch (\Exception $e) {
                 Log::warning('Failed to calculate calories, using fallback', [
                     'session_id' => $session->id,
@@ -230,7 +233,7 @@ class WorkoutService
                     'template_exists' => $session->template ? 'yes' : 'no'
                 ]);
                 // Fallback calorie calculation: ~5 calories per minute
-                $updateData['actual_calories'] = $updateData['actual_duration'] * 5;
+                $updateData['actual_calories'] = (int) ($updateData['actual_duration'] * 5);
             }
 
             $session->update($updateData);
