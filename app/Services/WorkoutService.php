@@ -183,12 +183,20 @@ class WorkoutService
 
             // Safely calculate calories with fallback
             try {
-                // Get workout type safely
+                // Get workout type safely with multiple fallbacks
                 $workoutType = 'general'; // Default fallback
-                if ($session->template && $session->template->type) {
+
+                // Try to get type from template first
+                if ($session->relationLoaded('template') && $session->template && isset($session->template->type)) {
                     $workoutType = $session->template->type;
-                } elseif ($session->type) {
+                }
+                // Fallback to session type
+                elseif (isset($session->type) && !empty($session->type)) {
                     $workoutType = $session->type;
+                }
+                // Fallback to category if type not available
+                elseif (isset($session->category) && !empty($session->category)) {
+                    $workoutType = $session->category;
                 }
 
                 $updateData['actual_calories'] = $this->calorieCalculator->calculate(
@@ -199,7 +207,10 @@ class WorkoutService
             } catch (\Exception $e) {
                 Log::warning('Failed to calculate calories, using fallback', [
                     'session_id' => $session->id,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
+                    'session_type' => $session->type ?? 'null',
+                    'template_loaded' => $session->relationLoaded('template'),
+                    'template_exists' => $session->template ? 'yes' : 'no'
                 ]);
                 // Fallback calorie calculation: ~5 calories per minute
                 $updateData['actual_calories'] = $updateData['actual_duration'] * 5;

@@ -666,9 +666,22 @@ class WorkoutController extends BaseController
             $user = $this->getAuthenticatedUser();
             
             try {
+                Log::info('Starting workout completion', [
+                    'session_id' => $id,
+                    'user_id' => $user->id
+                ]);
+
                 $session = Workout::where('is_template', false)
                                 ->where('user_id', $user->id)
+                                ->with(['user', 'template'])
                                 ->findOrFail($id);
+
+                Log::info('Session found for completion', [
+                    'session_id' => $session->id,
+                    'session_status' => $session->status,
+                    'has_template' => $session->template ? 'yes' : 'no',
+                    'template_id' => $session->template_id ?? 'null'
+                ]);
 
                 $validated = $request->validate([
                     'notes' => 'nullable|string',
@@ -677,15 +690,22 @@ class WorkoutController extends BaseController
                 ]);
 
                 $completedWorkout = $this->workoutService->completeWorkout($session, $validated);
+
+                Log::info('Workout completion successful', [
+                    'session_id' => $completedWorkout->id,
+                    'status' => $completedWorkout->status
+                ]);
+
                 return $this->successResponse($completedWorkout->fresh()->toArray(), 'Workout session completed successfully');
-                
+
             } catch (\Exception $e) {
                 Log::error('Error completing workout', [
                     'session_id' => $id,
                     'user_id' => $user->id,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
                 ]);
-                
+
                 return $this->errorResponse('Failed to complete workout session', 500);
             }
 
