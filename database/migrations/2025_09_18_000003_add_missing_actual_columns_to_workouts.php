@@ -30,13 +30,13 @@ return new class extends Migration
         }
 
         // Update existing completed workouts with default values if they're null
-        // This prevents issues with existing data
-        DB::statement('UPDATE workouts SET actual_duration = estimated_duration WHERE actual_duration IS NULL AND estimated_duration IS NOT NULL AND status = "completed"');
-        DB::statement('UPDATE workouts SET actual_calories = estimated_calories WHERE actual_calories IS NULL AND estimated_calories IS NOT NULL AND status = "completed"');
+        // This prevents issues with existing data (using completed_at to identify completed workouts)
+        DB::statement('UPDATE workouts SET actual_duration = estimated_duration WHERE actual_duration IS NULL AND estimated_duration IS NOT NULL AND completed_at IS NOT NULL');
+        DB::statement('UPDATE workouts SET actual_calories = estimated_calories WHERE actual_calories IS NULL AND estimated_calories IS NOT NULL AND completed_at IS NOT NULL');
 
         // For completed workouts without any duration data, set a reasonable default
-        DB::statement('UPDATE workouts SET actual_duration = 30 WHERE actual_duration IS NULL AND status = "completed"');
-        DB::statement('UPDATE workouts SET actual_calories = 150 WHERE actual_calories IS NULL AND status = "completed"');
+        DB::statement('UPDATE workouts SET actual_duration = 30 WHERE actual_duration IS NULL AND completed_at IS NOT NULL');
+        DB::statement('UPDATE workouts SET actual_calories = 150 WHERE actual_calories IS NULL AND completed_at IS NOT NULL');
     }
 
     /**
