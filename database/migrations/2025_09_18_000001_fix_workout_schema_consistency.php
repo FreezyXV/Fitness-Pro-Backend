@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -34,8 +35,8 @@ return new class extends Migration
         });
 
         // Update existing data to maintain consistency
-        DB::statement('UPDATE workouts SET difficulty_level = difficulty WHERE difficulty_level IS NULL OR difficulty_level = ""');
-        DB::statement('UPDATE workouts SET category = type WHERE category IS NULL OR category = ""');
+        DB::statement("UPDATE workouts SET difficulty_level = difficulty WHERE difficulty_level IS NULL OR difficulty_level = ''");
+        DB::statement("UPDATE workouts SET category = type WHERE category IS NULL OR category = ''");
         DB::statement('UPDATE workouts SET estimated_duration = actual_duration WHERE estimated_duration IS NULL AND actual_duration IS NOT NULL');
         DB::statement('UPDATE workouts SET estimated_calories = actual_calories WHERE estimated_calories IS NULL AND actual_calories IS NOT NULL');
     }
