@@ -21,6 +21,7 @@ class Workout extends Model
         'name',
         'description',
         'category',
+        'difficulty',
         'difficulty_level',
         'body_focus',
         'type',
@@ -35,6 +36,8 @@ class Workout extends Model
         'completed_at',
         'actual_duration',
         'actual_calories',
+        'estimated_duration',
+        'estimated_calories',
         'notes',
         'is_public',
     ];
@@ -177,8 +180,9 @@ class Workout extends Model
             'intermediate' => 'Intermédiaire',
             'advanced' => 'Avancé'
         ];
-        
-        return $labels[$this->difficulty_level] ?? ucfirst($this->difficulty_level ?? 'Non défini');
+
+        $difficulty = $this->difficulty_level ?? $this->difficulty ?? 'unknown';
+        return $labels[$difficulty] ?? ucfirst($difficulty);
     }
 
     public function getCategoryLabelAttribute(): string

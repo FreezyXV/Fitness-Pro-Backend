@@ -52,9 +52,9 @@ class WorkoutController extends BaseController
                                         ->orWhere('user_id', config('app.system_user_id')); // Include system templates
                                   })
                                   ->select([
-                                      'id', 'name', 'description', 'type as category', 'difficulty as difficulty_level',
-                                      'estimated_duration', 'estimated_calories', 'user_id', 'is_template',
-                                      'created_at', 'updated_at'
+                                      'id', 'name', 'description', 'type', 'category', 'difficulty', 'difficulty_level',
+                                      'estimated_duration', 'estimated_calories', 'actual_duration', 'actual_calories',
+                                      'user_id', 'is_template', 'created_at', 'updated_at'
                                   ])
                                   ->with([
                                       'user:id,name,first_name' // Only eager load user data, not exercises for list view
@@ -63,11 +63,17 @@ class WorkoutController extends BaseController
 
                     // Apply filters (using actual column names, not aliases)
                     if ($request->has('category') && $request->get('category') !== 'all') {
-                        $query->where('type', $request->get('category'));
+                        $query->where(function($q) use ($request) {
+                            $q->where('type', $request->get('category'))
+                              ->orWhere('category', $request->get('category'));
+                        });
                     }
 
                     if ($request->has('difficulty') && $request->get('difficulty') !== 'all') {
-                        $query->where('difficulty', $request->get('difficulty'));
+                        $query->where(function($q) use ($request) {
+                            $q->where('difficulty', $request->get('difficulty'))
+                              ->orWhere('difficulty_level', $request->get('difficulty'));
+                        });
                     }
 
                     if ($request->has('search') && !empty($request->get('search'))) {

@@ -111,22 +111,22 @@ return new class extends Migration
             $table->foreignId('exercise_id')->constrained()->onDelete('cascade');
 
             // Exercise Order & Organization
-            $table->integer('order')->default(1); // Order within the workout
+            $table->integer('order_index')->default(0); // Order within the workout
             $table->string('superset_group')->nullable(); // For grouping exercises in supersets
 
             // Planned Values (from template or plan)
-            $table->integer('planned_sets')->nullable();
-            $table->integer('planned_reps')->nullable();
-            $table->decimal('planned_weight', 8, 2)->nullable(); // kg
-            $table->integer('planned_duration')->nullable(); // seconds
-            $table->integer('planned_rest')->nullable(); // seconds between sets
+            $table->integer('sets')->nullable();
+            $table->integer('reps')->nullable();
+            $table->decimal('target_weight', 8, 2)->nullable(); // kg
+            $table->integer('duration_seconds')->nullable(); // seconds
+            $table->integer('rest_time_seconds')->nullable(); // seconds between sets
 
             // Actual Values (performed during workout)
-            $table->integer('actual_sets')->nullable();
-            $table->integer('actual_reps')->nullable();
-            $table->decimal('actual_weight', 8, 2)->nullable(); // kg
-            $table->integer('actual_duration')->nullable(); // seconds
-            $table->integer('actual_rest')->nullable(); // seconds
+            $table->integer('completed_sets')->nullable();
+            $table->integer('completed_reps')->nullable();
+            $table->decimal('weight_used', 8, 2)->nullable(); // kg
+            $table->integer('actual_duration_seconds')->nullable(); // seconds
+            $table->text('notes')->nullable();
 
             // Performance Tracking
             $table->decimal('completion_percentage', 5, 2)->default(0);
@@ -134,21 +134,21 @@ return new class extends Migration
             $table->integer('effort_level')->nullable(); // 1-10 RPE scale
             $table->boolean('is_personal_record')->default(false);
             $table->decimal('one_rep_max', 8, 2)->nullable(); // Calculated 1RM
+            $table->boolean('is_completed')->default(false);
 
             // Form & Quality
             $table->enum('form_quality', ['poor', 'good', 'excellent'])->nullable();
-            $table->text('notes')->nullable();
 
             // System
             $table->timestamps();
 
             // Indexes for performance queries
-            $table->index(['workout_id', 'order']);
+            $table->index(['workout_id', 'order_index']);
             $table->index(['exercise_id', 'is_personal_record']);
             $table->index(['workout_id', 'completion_percentage']);
 
             // Ensure unique combination within a workout
-            $table->unique(['workout_id', 'exercise_id', 'order']);
+            $table->unique(['workout_id', 'exercise_id', 'order_index']);
         });
     }
 
