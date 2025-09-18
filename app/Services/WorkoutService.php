@@ -136,7 +136,7 @@ class WorkoutService
             if ($template) {
                 $data['name'] = $template->name;
                 $data['description'] = $template->description;
-                $data['type'] = $template->type;
+                $data['category'] = $template->category;
                 $data['difficulty'] = $template->difficulty;
             }
         }
