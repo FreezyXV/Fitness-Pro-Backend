@@ -136,8 +136,10 @@ class WorkoutService
             if ($template) {
                 $data['name'] = $template->name;
                 $data['description'] = $template->description;
-                $data['category'] = $template->category;
-                $data['difficulty'] = $template->difficulty;
+                $data['category'] = $template->category ?? $template->type;
+                $data['difficulty'] = $template->difficulty ?? $template->difficulty_level;
+                $data['type'] = $template->type ?? $template->category;
+                $data['difficulty_level'] = $template->difficulty_level ?? $template->difficulty;
             }
         }
 
@@ -186,6 +188,15 @@ class WorkoutService
                 // Get workout type safely with multiple fallbacks
                 $workoutType = 'general'; // Default fallback
 
+                // Try to load template if not loaded and template_id exists
+                if (!$session->relationLoaded('template') && $session->template_id) {
+                    try {
+                        $session->load('template');
+                    } catch (\Exception $e) {
+                        Log::warning('Failed to load template relation', ['session_id' => $session->id, 'template_id' => $session->template_id]);
+                    }
+                }
+
                 // Try to get type from template first
                 if ($session->relationLoaded('template') && $session->template && isset($session->template->type)) {
                     $workoutType = $session->template->type;
@@ -197,6 +208,10 @@ class WorkoutService
                 // Fallback to category if type not available
                 elseif (isset($session->category) && !empty($session->category)) {
                     $workoutType = $session->category;
+                }
+                // Try template fields
+                elseif ($session->relationLoaded('template') && $session->template) {
+                    $workoutType = $session->template->category ?? $session->template->type ?? 'general';
                 }
 
                 $updateData['actual_calories'] = $this->calorieCalculator->calculate(
@@ -336,12 +351,19 @@ class WorkoutService
     {
         $syncData = [];
         foreach ($exercises as $index => $exerciseData) {
+            $exerciseId = $exerciseData['exercise_id'] ?? $exerciseData['id'] ?? null;
+
+            if (!$exerciseId) {
+                Log::warning('Exercise ID missing in syncExercises', ['exercise_data' => $exerciseData]);
+                continue;
+            }
+
             $pivotData = [
-                'order_index' => $index,
+                'order_index' => $exerciseData['order_index'] ?? $index,
                 'sets' => $exerciseData['sets'] ?? null,
                 'reps' => $exerciseData['reps'] ?? null,
                 'duration_seconds' => $exerciseData['duration_seconds'] ?? null,
-                'rest_time_seconds' => $exerciseData['rest_time_seconds'] ?? null,
+                'rest_time_seconds' => $exerciseData['rest_time_seconds'] ?? 60,
                 'target_weight' => $exerciseData['target_weight'] ?? null,
                 'notes' => $exerciseData['notes'] ?? null,
             ];
@@ -356,9 +378,11 @@ class WorkoutService
                 ]);
             }
 
-            $syncData[$exerciseData['exercise_id']] = $pivotData;
+            $syncData[$exerciseId] = $pivotData;
         }
 
-        $workout->exercises()->sync($syncData);
+        if (!empty($syncData)) {
+            $workout->exercises()->sync($syncData);
+        }
     }
 }

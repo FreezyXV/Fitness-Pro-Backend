@@ -108,7 +108,9 @@ class WorkoutPlansSeeder extends Seeder
             'name' => 'Programme Débutant - Corps Entier',
             'description' => 'Introduction parfaite au fitness avec des mouvements de base pour tout le corps',
             'type' => 'strength',
+            'category' => 'strength',
             'difficulty' => 'beginner',
+            'difficulty_level' => 'beginner',
             'exercises' => [
                 // Warm-up
                 ['name' => '90:90 Hip Crossover', 'sets' => 1, 'duration' => 60, 'restTime' => 0],
@@ -130,7 +132,9 @@ class WorkoutPlansSeeder extends Seeder
             'name' => 'Débutant - Haut du Corps',
             'description' => 'Renforcement progressif des bras, épaules et poitrine',
             'type' => 'strength',
+            'category' => 'strength',
             'difficulty' => 'beginner',
+            'difficulty_level' => 'beginner',
             'exercises' => [
                 ['name' => '90:90 Hip Crossover', 'sets' => 1, 'duration' => 45, 'restTime' => 0],
                 ['name' => 'Push-Up', 'sets' => 3, 'reps' => 4, 'restTime' => 90],
@@ -146,7 +150,9 @@ class WorkoutPlansSeeder extends Seeder
             'name' => 'Débutant - Bas du Corps',
             'description' => 'Développement des jambes et fessiers avec des mouvements sûrs',
             'type' => 'strength',
+            'category' => 'strength',
             'difficulty' => 'beginner',
+            'difficulty_level' => 'beginner',
             'exercises' => [
                 ['name' => '90:90 Hip Crossover', 'sets' => 1, 'duration' => 60, 'restTime' => 0],
                 ['name' => 'Prisoner Squat', 'sets' => 3, 'reps' => 10, 'restTime' => 90],
@@ -162,7 +168,9 @@ class WorkoutPlansSeeder extends Seeder
             'name' => 'Débutant - Cardio & Mobilité',
             'description' => 'Amélioration de l\'endurance et de la flexibilité',
             'type' => 'cardio',
+            'category' => 'cardio',
             'difficulty' => 'beginner',
+            'difficulty_level' => 'beginner',
             'exercises' => [
                 ['name' => '90:90 Hip Crossover', 'sets' => 2, 'duration' => 45, 'restTime' => 30],
                 ['name' => 'Inchworm', 'sets' => 2, 'reps' => 5, 'restTime' => 60],
