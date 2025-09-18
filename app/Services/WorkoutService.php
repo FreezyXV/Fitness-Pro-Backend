@@ -128,6 +128,7 @@ class WorkoutService
             'template_id' => $templateId,
             'status' => 'in_progress',
             'started_at' => now(),
+            'name' => 'Custom Workout - ' . now()->format('M d, Y H:i'), // Default name for custom workouts
         ];
 
         $template = null;
