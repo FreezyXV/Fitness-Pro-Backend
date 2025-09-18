@@ -380,15 +380,19 @@ Route::get('/goals/public/{id}', function ($id) {
     }
 })->where('id', '[0-9]+')->name('goals.public.show');
 
-// Force goals seeder endpoint
+// Force goals seeder endpoint with debug info
 Route::post('/goals-seed', function () {
     try {
+        $userCount = \App\Models\User::count();
+        \Log::info('Users in database: ' . $userCount);
+
         \Artisan::call('db:seed', ['--class' => 'GoalsSeeder']);
         $goalCount = \App\Models\Goal::count();
 
         return response()->json([
             'success' => true,
             'message' => 'Goals seeded successfully',
+            'users_count' => $userCount,
             'goals_created' => $goalCount,
             'status' => 'seeded'
         ]);
