@@ -107,13 +107,7 @@ class GoalsSeeder extends Seeder
         ];
 
         foreach ($goals as $goalData) {
-            try {
-                $goal = Goal::create($goalData);
-                \Log::info('Created goal: ' . $goal->title);
-            } catch (\Exception $e) {
-                \Log::error('Failed to create goal: ' . $e->getMessage());
-                \Log::error('Goal data: ' . json_encode($goalData));
-            }
+            Goal::create($goalData);
         }
 
         $this->command->info('Created 6 sample goals for user: ' . $user->email);

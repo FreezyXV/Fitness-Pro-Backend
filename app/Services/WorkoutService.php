@@ -164,41 +164,89 @@ class WorkoutService
     {
         Log::info('Completing workout session: ' . $session->id, $completionData);
 
-        $updateData = [
-            'status' => 'completed',
-            'completed_at' => now(),
-            'notes' => $completionData['notes'] ?? $session->notes,
-        ];
+        try {
+            // Ensure relationships are loaded safely
+            if (!$session->relationLoaded('user')) {
+                $session->load('user');
+            }
 
-        if ($session->status === 'in_progress' && $session->started_at) {
-            $updateData['actual_duration'] = $session->started_at->diffInMinutes(now());
+            $updateData = [
+                'status' => 'completed',
+                'completed_at' => now(),
+                'notes' => $completionData['notes'] ?? $session->notes,
+            ];
+
+            if ($session->status === 'in_progress' && $session->started_at) {
+                $updateData['actual_duration'] = $session->started_at->diffInMinutes(now());
+            }
+            $updateData['actual_duration'] = $completionData['actual_duration'] ?? $updateData['actual_duration'] ?? 0;
+
+            // Safely calculate calories with fallback
+            try {
+                // Get workout type safely
+                $workoutType = 'general'; // Default fallback
+                if ($session->template && $session->template->type) {
+                    $workoutType = $session->template->type;
+                } elseif ($session->type) {
+                    $workoutType = $session->type;
+                }
+
+                $updateData['actual_calories'] = $this->calorieCalculator->calculate(
+                    $updateData['actual_duration'],
+                    $session->user->weight ?? 70,
+                    $workoutType
+                );
+            } catch (\Exception $e) {
+                Log::warning('Failed to calculate calories, using fallback', [
+                    'session_id' => $session->id,
+                    'error' => $e->getMessage()
+                ]);
+                // Fallback calorie calculation: ~5 calories per minute
+                $updateData['actual_calories'] = $updateData['actual_duration'] * 5;
+            }
+
+            $session->update($updateData);
+
+            if (!empty($completionData['exercises'])) {
+                try {
+                    $this->syncExercises($session, $completionData['exercises'], true);
+                } catch (\Exception $e) {
+                    Log::warning('Failed to sync exercises during completion', [
+                        'session_id' => $session->id,
+                        'error' => $e->getMessage()
+                    ]);
+                    // Continue without exercises sync if it fails
+                }
+            }
+
+            // Update user statistics and clear cache after workout completion
+            try {
+                $this->statisticsService->clearUserCache($session->user);
+                $this->updateUserStats($session->user, $updateData);
+            } catch (\Exception $e) {
+                Log::warning('Failed to update user stats, but workout completion succeeded', [
+                    'session_id' => $session->id,
+                    'error' => $e->getMessage()
+                ]);
+                // Continue without stats update if it fails
+            }
+
+            Log::info('Workout session completed successfully', [
+                'session_id' => $session->id,
+                'duration' => $updateData['actual_duration'],
+                'calories' => $updateData['actual_calories']
+            ]);
+
+            return $session;
+
+        } catch (\Exception $e) {
+            Log::error('Failed to complete workout session', [
+                'session_id' => $session->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
         }
-        $updateData['actual_duration'] = $completionData['actual_duration'] ?? $updateData['actual_duration'] ?? 0;
-
-        $updateData['actual_calories'] = $this->calorieCalculator->calculate(
-            $updateData['actual_duration'],
-            $session->user->weight ?? 70,
-            ($session->template ? $session->template->type : null) ?? 'general'
-        );
-
-        $session->update($updateData);
-
-        if (!empty($completionData['exercises'])) {
-            $this->syncExercises($session, $completionData['exercises'], true);
-        }
-
-        // Update user statistics and clear cache after workout completion
-        $this->statisticsService->clearUserCache($session->user);
-        
-        // Increment user's total workouts, minutes, and calories
-        $this->updateUserStats($session->user, $updateData);
-
-        Log::info('Workout session completed', [
-            'session_id' => $session->id,
-            'duration' => $updateData['actual_duration'],
-            'calories' => $updateData['actual_calories']
-        ]);
-        return $session;
     }
 
     public function logWorkout(array $data, User $user): Workout
