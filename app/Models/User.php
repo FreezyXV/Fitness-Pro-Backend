@@ -9,6 +9,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 use App\Traits\CamelCaseSerializationTrait;
 
 class User extends Authenticatable
@@ -265,18 +266,33 @@ class User extends Authenticatable
         }
 
         try {
-            $goalStats = $this->goals()
-                ->selectRaw('
-                    COUNT(*) as total_goals,
-                    SUM(CASE WHEN status = "active" THEN 1 ELSE 0 END) as active_goals,
-                    SUM(CASE WHEN status = "completed" THEN 1 ELSE 0 END) as completed_goals
-                ')
-                ->first();
+            // Check if goals table exists and has the required columns
+            if (Schema::hasTable('goals')) {
+                if (Schema::hasColumn('goals', 'active')) {
+                    // Use the active column if it exists
+                    $goalStats = $this->goals()
+                        ->selectRaw('
+                            COUNT(*) as total_goals,
+                            SUM(CASE WHEN active = true THEN 1 ELSE 0 END) as active_goals,
+                            SUM(CASE WHEN status = \'completed\' THEN 1 ELSE 0 END) as completed_goals
+                        ')
+                        ->first();
+                } else {
+                    // Fallback to status-based query
+                    $goalStats = $this->goals()
+                        ->selectRaw('
+                            COUNT(*) as total_goals,
+                            SUM(CASE WHEN status = \'active\' OR status = \'in_progress\' THEN 1 ELSE 0 END) as active_goals,
+                            SUM(CASE WHEN status = \'completed\' THEN 1 ELSE 0 END) as completed_goals
+                        ')
+                        ->first();
+                }
 
-            if ($goalStats) {
-                $stats['total_goals'] = (int) $goalStats->total_goals;
-                $stats['active_goals'] = (int) $goalStats->active_goals;
-                $stats['completed_goals'] = (int) $goalStats->completed_goals;
+                if ($goalStats) {
+                    $stats['total_goals'] = (int) $goalStats->total_goals;
+                    $stats['active_goals'] = (int) $goalStats->active_goals;
+                    $stats['completed_goals'] = (int) $goalStats->completed_goals;
+                }
             }
         } catch (\Exception $e) {
             Log::warning('Goal stats calculation failed', [
