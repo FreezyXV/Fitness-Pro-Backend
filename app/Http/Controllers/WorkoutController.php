@@ -670,49 +670,152 @@ class WorkoutController extends BaseController
     {
         return $this->execute(function () use ($request, $id) {
             $user = $this->getAuthenticatedUser();
-            
+
             try {
                 Log::info('Starting workout completion', [
                     'session_id' => $id,
-                    'user_id' => $user->id
+                    'user_id' => $user->id,
+                    'request_data' => $request->all()
                 ]);
 
+                // First check if the workout exists with detailed logging
                 $session = Workout::where('is_template', false)
                                 ->where('user_id', $user->id)
-                                ->with(['user', 'template'])
-                                ->findOrFail($id);
+                                ->find($id);
+
+                if (!$session) {
+                    // Get available sessions for debugging
+                    $availableSessions = Workout::where('is_template', false)
+                        ->where('user_id', $user->id)
+                        ->select('id', 'name', 'status', 'started_at', 'completed_at')
+                        ->get();
+
+                    Log::warning('Workout session not found', [
+                        'requested_session_id' => $id,
+                        'user_id' => $user->id,
+                        'available_sessions' => $availableSessions->toArray(),
+                        'total_available' => $availableSessions->count()
+                    ]);
+
+                    return $this->errorResponse(
+                        "Workout session #{$id} not found. Please check if the session exists or start a new workout.",
+                        404,
+                        [
+                            'session_id' => $id,
+                            'available_sessions' => $availableSessions->map(function($session) {
+                                return [
+                                    'id' => $session->id,
+                                    'name' => $session->name,
+                                    'status' => $session->status,
+                                    'started_at' => $session->started_at,
+                                    'can_complete' => $session->status === 'in_progress'
+                                ];
+                            })
+                        ]
+                    );
+                }
+
+                // Load relationships after confirming session exists
+                $session->load(['user', 'template']);
 
                 Log::info('Session found for completion', [
                     'session_id' => $session->id,
+                    'session_name' => $session->name,
                     'session_status' => $session->status,
                     'has_template' => $session->template ? 'yes' : 'no',
-                    'template_id' => $session->template_id ?? 'null'
+                    'template_id' => $session->template_id ?? 'null',
+                    'started_at' => $session->started_at,
+                    'completed_at' => $session->completed_at
                 ]);
 
+                // Validate session status
+                if ($session->status === 'completed') {
+                    Log::warning('Attempting to complete already completed session', [
+                        'session_id' => $session->id,
+                        'completed_at' => $session->completed_at
+                    ]);
+
+                    return $this->errorResponse(
+                        'This workout session has already been completed.',
+                        400,
+                        [
+                            'session_id' => $session->id,
+                            'status' => $session->status,
+                            'completed_at' => $session->completed_at
+                        ]
+                    );
+                }
+
+                // Validate request data
                 $validated = $request->validate([
-                    'notes' => 'nullable|string',
-                    'actual_duration' => 'sometimes|integer|min:1',
+                    'notes' => 'nullable|string|max:1000',
+                    'actual_duration' => 'sometimes|integer|min:1|max:600', // Max 10 hours
+                    'actual_calories' => 'sometimes|integer|min:1|max:5000',
                     'exercises' => 'nullable|array',
                 ]);
 
+                Log::info('Validated request data', [
+                    'session_id' => $session->id,
+                    'validated_data' => $validated
+                ]);
+
+                // Complete the workout using the service
                 $completedWorkout = $this->workoutService->completeWorkout($session, $validated);
 
                 Log::info('Workout completion successful', [
                     'session_id' => $completedWorkout->id,
-                    'status' => $completedWorkout->status
+                    'status' => $completedWorkout->status,
+                    'completed_at' => $completedWorkout->completed_at,
+                    'actual_duration' => $completedWorkout->actual_duration,
+                    'actual_calories' => $completedWorkout->actual_calories
                 ]);
 
                 return $this->successResponse($completedWorkout->fresh()->toArray(), 'Workout session completed successfully');
+
+            } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+                Log::warning('Workout session not found via findOrFail', [
+                    'session_id' => $id,
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage()
+                ]);
+
+                return $this->errorResponse(
+                    "Workout session #{$id} not found.",
+                    404,
+                    ['session_id' => $id]
+                );
+
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                Log::warning('Validation failed for workout completion', [
+                    'session_id' => $id,
+                    'user_id' => $user->id,
+                    'validation_errors' => $e->errors()
+                ]);
+
+                return $this->errorResponse(
+                    'Validation failed: ' . collect($e->errors())->flatten()->implode(', '),
+                    422,
+                    ['validation_errors' => $e->errors()]
+                );
 
             } catch (\Exception $e) {
                 Log::error('Error completing workout', [
                     'session_id' => $id,
                     'user_id' => $user->id,
-                    'error' => $e->getMessage(),
+                    'error_message' => $e->getMessage(),
+                    'error_file' => $e->getFile(),
+                    'error_line' => $e->getLine(),
                     'trace' => $e->getTraceAsString()
                 ]);
 
-                return $this->errorResponse('Failed to complete workout session', 500);
+                return $this->errorResponse(
+                    'Failed to complete workout session: ' . $e->getMessage(),
+                    500,
+                    [
+                        'session_id' => $id,
+                        'error_details' => $e->getMessage()
+                    ]
+                );
             }
 
         }, 'Complete workout session');
