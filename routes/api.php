@@ -380,20 +380,76 @@ Route::get('/goals/public/{id}', function ($id) {
     }
 })->where('id', '[0-9]+')->name('goals.public.show');
 
-// Force goals seeder endpoint with debug info
+// Force goals seeder endpoint with direct creation
 Route::post('/goals-seed', function () {
     try {
         $userCount = \App\Models\User::count();
-        \Log::info('Users in database: ' . $userCount);
+        $user = \App\Models\User::first();
 
-        \Artisan::call('db:seed', ['--class' => 'GoalsSeeder']);
-        $goalCount = \App\Models\Goal::count();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No users found in database',
+                'users_count' => $userCount
+            ], 400);
+        }
+
+        // Create goals directly instead of using seeder
+        $goalsData = [
+            [
+                'user_id' => $user->id,
+                'title' => "Perdre 10 kg pour l'été",
+                'description' => "Atteindre un poids plus sain en adoptant une alimentation équilibrée et une routine d'exercice régulière.",
+                'category' => 'weight',
+                'unit' => 'kg',
+                'current_value' => 2,
+                'target_value' => 10,
+                'target_date' => now()->addDays(60)->format('Y-m-d'),
+                'status' => 'active',
+            ],
+            [
+                'user_id' => $user->id,
+                'title' => 'Courir 150 km ce mois',
+                'description' => 'Améliorer mon endurance cardiovasculaire en courant régulièrement.',
+                'category' => 'cardio',
+                'unit' => 'km',
+                'current_value' => 120,
+                'target_value' => 150,
+                'target_date' => now()->endOfMonth()->format('Y-m-d'),
+                'status' => 'active',
+            ],
+            [
+                'user_id' => $user->id,
+                'title' => 'Méditer 30 jours consécutifs',
+                'description' => 'Développer une pratique de méditation quotidienne pour améliorer mon bien-être mental.',
+                'category' => 'mental',
+                'unit' => 'jours',
+                'current_value' => 30,
+                'target_value' => 30,
+                'target_date' => now()->subDay()->format('Y-m-d'),
+                'status' => 'completed',
+            ]
+        ];
+
+        $createdGoals = 0;
+        foreach ($goalsData as $goalData) {
+            try {
+                $goal = \App\Models\Goal::create($goalData);
+                $createdGoals++;
+            } catch (\Exception $e) {
+                \Log::error('Failed to create goal: ' . $e->getMessage());
+            }
+        }
+
+        $totalGoals = \App\Models\Goal::count();
 
         return response()->json([
             'success' => true,
-            'message' => 'Goals seeded successfully',
+            'message' => 'Goals created directly',
             'users_count' => $userCount,
-            'goals_created' => $goalCount,
+            'user_email' => $user->email,
+            'goals_created_now' => $createdGoals,
+            'total_goals' => $totalGoals,
             'status' => 'seeded'
         ]);
     } catch (\Exception $e) {
