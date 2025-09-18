@@ -175,6 +175,7 @@ class WorkoutService
             $updateData = [
                 'status' => 'completed',
                 'completed_at' => now(),
+                'updated_at' => now(), // Explicitly set updated_at
                 'notes' => $completionData['notes'] ?? $session->notes,
             ];
 

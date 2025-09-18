@@ -49,6 +49,8 @@ class Workout extends Model
         'completed_at' => 'datetime',
         'actual_duration' => 'integer',
         'actual_calories' => 'integer',
+        'estimated_duration' => 'integer',
+        'estimated_calories' => 'integer',
         'body_focus' => 'string',
         'type' => 'string',
         'intensity' => 'string',
@@ -59,6 +61,7 @@ class Workout extends Model
 
     // Add computed attributes for frontend compatibility - OPTIMIZED
     // Removed 'exercise_count' to prevent N+1 queries and memory issues
+    // Removed 'estimated_duration' and 'estimated_calories' since they're now database columns
     protected $appends = [
         'difficulty_label',
         'category_label',
@@ -67,8 +70,6 @@ class Workout extends Model
         'category_info',
         'is_custom',
         'is_active',
-        'estimated_duration',
-        'estimated_calories',
         'creator_name',
         'usage_count',
         'completion_rate'
@@ -274,25 +275,25 @@ class Workout extends Model
     }
 
     // Additional computed properties for frontend
-    public function getEstimatedDurationAttribute(): int
+    // Note: estimated_duration and estimated_calories are now database columns
+    // These methods are kept for backwards compatibility but renamed to avoid conflicts
+    public function getCalculatedDurationAttribute(): int
     {
-        // If duration is already set, return it
-        if ($this->actual_duration) {
-            return $this->actual_duration;
+        // Return database value if set, otherwise calculate from exercises
+        if ($this->estimated_duration) {
+            return $this->estimated_duration;
         }
 
-        // Otherwise, calculate from exercises
         return $this->calculateDurationFromExercises();
     }
 
-    public function getEstimatedCaloriesAttribute(): int
+    public function getCalculatedCaloriesAttribute(): int
     {
-        // If calories are already set, return them
-        if ($this->actual_calories) {
-            return $this->actual_calories;
+        // Return database value if set, otherwise calculate from workout
+        if ($this->estimated_calories) {
+            return $this->estimated_calories;
         }
 
-        // Otherwise, calculate based on estimated duration and intensity
         return $this->calculateCaloriesFromWorkout();
     }
 
@@ -630,7 +631,7 @@ class Workout extends Model
 
     public function calculateCaloriesFromWorkout(): int
     {
-        $duration = $this->getEstimatedDurationAttribute();
+        $duration = $this->estimated_duration ?: $this->calculateDurationFromExercises();
         if ($duration <= 0) return 0;
 
         // Default user weight (should ideally come from user profile)
