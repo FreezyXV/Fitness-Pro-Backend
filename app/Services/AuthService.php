@@ -351,4 +351,39 @@ class AuthService
 
         return $response;
     }
+
+    /**
+     * Direct password reset without token (for UI-based reset).
+     */
+    public function directResetPassword(string $email, string $password): bool
+    {
+        Log::info('AuthService: Direct password reset', [
+            'email' => $email
+        ]);
+
+        try {
+            $user = User::where('email', $email)->first();
+
+            if (!$user) {
+                throw new \Exception('User not found');
+            }
+
+            $user->password = Hash::make($password);
+            $user->setRememberToken(Str::random(60));
+            $user->save();
+
+            Log::info('AuthService: Direct password reset successful', [
+                'email' => $email
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('AuthService: Direct password reset failed', [
+                'email' => $email,
+                'error' => $e->getMessage()
+            ]);
+
+            throw $e;
+        }
+    }
 }

@@ -546,6 +546,7 @@ Route::prefix('auth')->name('api.auth.')->group(function () {
     // Password reset endpoints
     Route::post('password/email', [AuthController::class, 'sendResetLinkEmail'])->name('password.email');
     Route::post('password/reset', [AuthController::class, 'resetPassword'])->name('password.reset');
+    Route::post('password/direct-reset', [AuthController::class, 'directResetPassword'])->name('password.direct-reset');
 });
 
 // =============================================

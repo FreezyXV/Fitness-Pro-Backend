@@ -260,4 +260,31 @@ class AuthController extends BaseController
             );
         }
     }
+
+    /**
+     * Direct password reset without token (for UI-based reset).
+     */
+    public function directResetPassword(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'email' => 'required|email|exists:users,email',
+                'password' => 'required|confirmed|min:8',
+            ]);
+
+            $this->authService->directResetPassword($validated['email'], $validated['password']);
+            return $this->successResponse(null, 'Password has been reset successfully.');
+        } catch (\Exception $e) {
+            Log::error('Direct password reset failed', [
+                'email' => $request->email,
+                'error' => $e->getMessage()
+            ]);
+
+            return $this->errorResponse(
+                'Failed to reset password: ' . $e->getMessage(),
+                500,
+                config('app.debug') ? $e->getMessage() : null
+            );
+        }
+    }
 }
