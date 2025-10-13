@@ -29,11 +29,28 @@ Route::name('auth.')->group(function () {
             'login_url' => '/api/auth/login'
         ], 401);
     })->name('login');
-    
+
     Route::get('register', function () {
         return response()->json([
             'message' => 'Please register via API endpoints',
             'register_url' => '/api/auth/register'
         ], 401);
     })->name('register');
+});
+
+// Named password reset routes for Laravel Password facade
+Route::name('password.')->group(function () {
+    Route::get('password/reset', function () {
+        return response()->json([
+            'message' => 'This is the password reset callback route',
+            'note' => 'Password reset is handled via API endpoints'
+        ]);
+    })->name('reset');
+
+    Route::get('password/email', function () {
+        return response()->json([
+            'message' => 'This is the password email route',
+            'note' => 'Password reset is handled via API endpoints'
+        ]);
+    })->name('email');
 });
