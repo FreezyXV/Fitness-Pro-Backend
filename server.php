@@ -22,4 +22,4 @@ $remoteAddress = $_SERVER['REMOTE_ADDR'].':'.$_SERVER['REMOTE_PORT'];
 // This prevents "Broken pipe" errors from corrupting JSON responses
 @file_put_contents('php://stdout', "[$formattedDateTime] $remoteAddress [$requestMethod] URI: $uri\n");
 
-require_once $publicPath.'/public/index.php';
+require_once $publicPath.'/index.php';
