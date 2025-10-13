@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use App\Traits\CamelCaseSerializationTrait;
+use App\Notifications\ResetPasswordNotification;
 
 class User extends Authenticatable
 {
@@ -824,5 +825,20 @@ class User extends Authenticatable
         return $query->whereHas('sessions', function ($q) use ($days) {
             $q->where('completed_at', '>=', Carbon::now()->subDays($days));
         });
+    }
+
+    // =============================================
+    // PASSWORD RESET NOTIFICATION
+    // =============================================
+
+    /**
+     * Send the password reset notification.
+     *
+     * @param  string  $token
+     * @return void
+     */
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new ResetPasswordNotification($token));
     }
 }

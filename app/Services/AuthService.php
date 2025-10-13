@@ -311,28 +311,44 @@ class AuthService
         Log::info('AuthService: Resetting user password', [
             'email' => $data['email']
         ]);
-        
+
         $response = Password::reset(
             $data,
             function ($user, $password) {
+                if (!$user) {
+                    Log::error('AuthService: User is null in password reset callback');
+                    throw new \Exception('User not found');
+                }
+
                 $user->forceFill([
                     'password' => Hash::make($password)
-                ])->setRememberToken(Str::random(60))->save();
+                ])->setRememberToken(Str::random(60));
+
+                $user->save();
             }
         );
-        
+
         if ($response !== Password::PASSWORD_RESET) {
             Log::error('AuthService: Failed to reset password', [
                 'email' => $data['email'],
                 'response' => $response
             ]);
-            throw new \Exception('Failed to reset password.');
+
+            // More descriptive error messages
+            $errorMessage = match($response) {
+                Password::INVALID_USER => 'Aucun utilisateur trouvé avec cet email.',
+                Password::INVALID_TOKEN => 'Le lien de réinitialisation est invalide ou a expiré.',
+                Password::RESET_THROTTLED => 'Trop de tentatives. Veuillez réessayer plus tard.',
+                default => 'Échec de la réinitialisation du mot de passe.'
+            };
+
+            throw new \Exception($errorMessage);
         }
-        
+
         Log::info('AuthService: Password reset successfully', [
             'email' => $data['email']
         ]);
-        
+
         return $response;
     }
 }
