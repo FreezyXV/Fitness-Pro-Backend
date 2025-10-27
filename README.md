@@ -2953,3 +2953,4 @@ php artisan db:show              # Info base de données
 
 **Ce backend est le cœur de FitnessPro, gérant toute la logique métier et la persistance des données. Pour l'interface utilisateur, consultez le [README du frontend](../frontend/README.md).**
 # Updated Mon Oct 27 09:53:06 CET 2025
+
