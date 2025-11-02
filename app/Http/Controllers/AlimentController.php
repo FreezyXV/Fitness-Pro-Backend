@@ -3,24 +3,26 @@
 namespace App\Http\Controllers;
 
 use App\Models\Aliment;
-use Illuminate\Http\Request;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Foundation\Bus\DispatchesJobs;
-use Illuminate\Foundation\Validation\ValidatesRequests;
-use Illuminate\Routing\Controller as BaseController;
+use Illuminate\Http\JsonResponse;
 
 class AlimentController extends BaseController
 {
-    use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
-    public function index()
+    /**
+     * Get all aliments
+     */
+    public function index(): JsonResponse
     {
-        $aliments = Aliment::all();
-        return response()->json($aliments);
+        return $this->execute(function () {
+            $aliments = Aliment::all();
+            return $this->successResponse($aliments, 'Aliments retrieved successfully');
+        }, 'Get aliments', false);
     }
 
-    public function getBaseAliments()
+    /**
+     * Get base aliments (alias for index)
+     */
+    public function getBaseAliments(): JsonResponse
     {
-        $aliments = Aliment::all();
-        return response()->json($aliments);
+        return $this->index();
     }
 }
