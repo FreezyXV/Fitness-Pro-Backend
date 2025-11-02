@@ -20,11 +20,11 @@ return [
         'http://localhost:3000',
         'http://127.0.0.1:3000',
         env('FRONTEND_URL', 'https://fitness-pro-frontend.vercel.app'),
+        'https://fitness-pro-frontend-ajn5lmhat-ivans-projects-66d9a97b.vercel.app',
     ],
 
     'allowed_origins_patterns' => [
-        '#^https://fitness-pro-.*-freezyxv\.vercel\.app$#',
-        '#^https://fitness-pro-frontend\.vercel\.app$#',
+        '#^https://fitness-pro-frontend-.*\.vercel\.app$#',
         '#^https://.*\.fly\.dev$#',
     ],
 
