@@ -4,21 +4,23 @@ namespace App\Services;
 
 use App\Models\Goal;
 use App\Models\User;
+use App\Repositories\Contracts\GoalRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 class GoalsService
 {
+    protected GoalRepositoryInterface $goalRepository;
+
+    public function __construct(GoalRepositoryInterface $goalRepository)
+    {
+        $this->goalRepository = $goalRepository;
+    }
+
     public function getGoals(User $user, array $filters = []): array
     {
-        $query = Goal::where('user_id', $user->id);
-
-        if (isset($filters['status']) && $filters['status'] !== '') {
-            $query->where('status', $filters['status']);
-        }
-
-        $goals = $query->orderBy('created_at', 'desc')->get();
+        $goals = $this->goalRepository->getForUser($user, $filters);
 
         return $goals->map(function($goal) {
             return $goal->toArray();
@@ -31,44 +33,43 @@ class GoalsService
         $data['current_value'] = 0;
         $data['status'] = 'active';
 
-        return Goal::create($data);
+        return $this->goalRepository->create($data);
     }
 
     public function updateGoal(User $user, int $goalId, array $data): Goal
     {
-        $goal = Goal::where('user_id', $user->id)->findOrFail($goalId);
-        $goal->update($data);
-        return $goal;
+        $goal = $this->goalRepository->findOrFailForUser($user, $goalId);
+        return $this->goalRepository->update($goal, $data);
     }
 
     public function getGoal(User $user, int $goalId): Goal
     {
-        return Goal::where('user_id', $user->id)->findOrFail($goalId);
+        return $this->goalRepository->findOrFailForUser($user, $goalId);
     }
 
     public function deleteGoal(User $user, int $goalId): void
     {
-        $goal = Goal::where('user_id', $user->id)->findOrFail($goalId);
-        $goal->delete();
+        $goal = $this->goalRepository->findOrFailForUser($user, $goalId);
+        $this->goalRepository->delete($goal);
     }
 
     public function updateGoalProgress(User $user, int $goalId, float $progressValue): Goal
     {
-        $goal = Goal::where('user_id', $user->id)->findOrFail($goalId);
+        $goal = $this->goalRepository->findOrFailForUser($user, $goalId);
         $goal->updateProgress($progressValue);
         return $goal;
     }
 
     public function markGoalComplete(User $user, int $goalId): Goal
     {
-        $goal = Goal::where('user_id', $user->id)->findOrFail($goalId);
+        $goal = $this->goalRepository->findOrFailForUser($user, $goalId);
         $goal->markAsCompleted();
         return $goal;
     }
 
     public function activateGoal(User $user, int $goalId): Goal
     {
-        $goal = Goal::where('user_id', $user->id)->findOrFail($goalId);
+        $goal = $this->goalRepository->findOrFailForUser($user, $goalId);
         $goal->status = 'active';
         $goal->save();
         return $goal;
@@ -76,7 +77,7 @@ class GoalsService
 
     public function pauseGoal(User $user, int $goalId): Goal
     {
-        $goal = Goal::where('user_id', $user->id)->findOrFail($goalId);
+        $goal = $this->goalRepository->findOrFailForUser($user, $goalId);
         $goal->status = 'paused';
         $goal->save();
         return $goal;
@@ -84,20 +85,16 @@ class GoalsService
 
     public function resetGoal(User $user, int $goalId): Goal
     {
-        $goal = Goal::where('user_id', $user->id)->findOrFail($goalId);
-        $goal->update([
+        $goal = $this->goalRepository->findOrFailForUser($user, $goalId);
+        return $this->goalRepository->update($goal, [
             'current_value' => 0,
             'status' => 'not-started'
         ]);
-        return $goal;
     }
 
     public function resetAllGoals(User $user): void
     {
-        Goal::where('user_id', $user->id)->update([
-            'current_value' => 0,
-            'status' => 'not-started',
-        ]);
+        $this->goalRepository->resetAllForUser($user);
     }
 
     public function validateGoalData(Request $request, bool $isUpdate = false): array
@@ -119,4 +116,3 @@ class GoalsService
         return $request->validate($rules);
     }
 }
-
