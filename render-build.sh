@@ -10,6 +10,10 @@ echo "🔨 Starting Render build process..."
 echo "📦 Installing Composer dependencies..."
 composer install --no-dev --optimize-autoloader --no-interaction
 
+# Create SQLite database file
+echo " Touching database/database.sqlite..."
+touch database/database.sqlite
+
 # Run database migrations
 echo "🗄️  Running database migrations..."
 php artisan migrate --force --no-interaction
