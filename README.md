@@ -44,7 +44,7 @@ Ce backend est le **cerveau** de l'application FitnessPro. Imaginez-le comme le 
 │  🔐 Sanctum           Authentification SPA/API         │
 │  🗄️ SQLite/PostgreSQL Base de données relationnelle   │
 │  📮 Composer          Gestionnaire de dépendances      │
-│  🚀 Fly.io            Plateforme de déploiement cloud  │
+│  🚀 Render            Plateforme de déploiement cloud  │
 │                                                         │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -2441,120 +2441,101 @@ class AuthTest extends TestCase {
 
 ## 🚀 Déploiement
 
-### Déploiement sur Fly.io
+### Déploiement sur Render
 
-Notre backend est déployé sur [Fly.io](https://fly.io), une plateforme cloud moderne.
+Notre backend est déployé sur [Render](https://render.com), une plateforme cloud moderne.
 
-**URL Production**: `https://fitness-pro-backend.fly.dev`
+**URL Production**: `https://fitness-pro-backend.onrender.com`
 
-#### Configuration Fly.io
+#### Configuration Render
 
-**1. Fichier de Configuration** ([fly.toml](fly.toml:1)):
-```toml
-app = "fitness-pro-backend"
-primary_region = "cdg"  # Paris
+**Fichiers de Configuration**:
+- **[render.yaml](render.yaml:1)** - Blueprint pour déploiement automatique
+- **[Dockerfile](Dockerfile:1)** - Image Docker de production
+- **[render-build.sh](render-build.sh:1)** - Script de build (migrations)
+- **[.env.render](.env.render:1)** - Template des variables d'environnement
 
-[build]
-  [build.args]
-    PHP_VERSION = "8.2"
-
-[env]
-  APP_ENV = "production"
-  APP_DEBUG = "false"
-  LOG_CHANNEL = "stack"
-  LOG_LEVEL = "info"
-
-[http_service]
-  internal_port = 8080
-  force_https = true
-  auto_stop_machines = true
-  auto_start_machines = true
-  min_machines_running = 0
-  processes = ["app"]
-
-  [[http_service.checks]]
-    interval = "15s"
-    timeout = "10s"
-    grace_period = "30s"
-    method = "GET"
-    path = "/api/health"
-```
-
-#### Commandes de Déploiement
+#### Déploiement Automatique (Recommandé)
 
 ```bash
-# 1. S'authentifier à Fly.io
-fly auth login
+# 1. Créer un compte sur Render.com
+# Visiter: https://render.com/signup
 
-# 2. Créer l'application (première fois uniquement)
-cd backend
-fly launch
-# Répondre aux questions interactives
+# 2. Dans le Dashboard Render:
+#    - Cliquer "New +" → "Blueprint"
+#    - Connecter votre repository GitHub/GitLab
+#    - Render détectera automatiquement le fichier render.yaml
+#    - Cliquer "Apply" pour créer tous les services
 
-# 3. Configurer la base de données PostgreSQL
-fly postgres create
-# Noter les credentials retournées
+# 3. Configurer les variables d'environnement dans le Dashboard:
+#    - APP_KEY (générer avec: php artisan key:generate --show)
+#    - Configuration mail (MAIL_HOST, MAIL_USERNAME, MAIL_PASSWORD)
+#    - FRONTEND_URL (si différent de la valeur par défaut)
 
-# 4. Attacher la base de données à l'app
-fly postgres attach fitness-pro-db
+# 4. Le déploiement démarre automatiquement
+#    - Build de l'image Docker
+#    - Exécution des migrations
+#    - Démarrage de l'application
+```
 
-# 5. Configurer les secrets (variables d'environnement sensibles)
-fly secrets set APP_KEY="base64:..."
-fly secrets set DB_CONNECTION=pgsql
-fly secrets set DB_HOST=fitness-pro-db.internal
-fly secrets set DB_PORT=5432
-fly secrets set DB_DATABASE=fitness_pro
-fly secrets set DB_USERNAME=postgres
-fly secrets set DB_PASSWORD=xxxxx
+#### Déploiement Manuel
 
-# 6. Déployer l'application
-fly deploy
-# Build Docker image, push, et démarre les machines
+```bash
+# 1. Créer une base de données PostgreSQL
+#    Dashboard → "New +" → "PostgreSQL"
+#    Nom: fitness-pro-db
+#    Région: frankfurt (ou votre préférence)
+#    Plan: Starter ou Free
 
-# 7. Exécuter les migrations en production
-fly ssh console
-php artisan migrate --force
+# 2. Créer le Web Service
+#    Dashboard → "New +" → "Web Service"
+#    - Repository: Connecter votre repo
+#    - Nom: fitness-pro-backend
+#    - Runtime: Docker
+#    - Région: Même que la base de données
+#    - Branche: main
+#    - Dockerfile Path: ./Dockerfile
 
-# 8. Vérifier l'état
-fly status
-fly logs
+# 3. Ajouter les variables d'environnement (voir .env.render)
+#    Les variables DB_* seront automatiquement liées à la base
 
-# 9. Pour redéployer après changements
-git add .
-git commit -m "Update backend"
-fly deploy
+# 4. Cliquer "Create Web Service"
 ```
 
 #### Commandes de Gestion
 
 ```bash
 # Voir les logs en temps réel
-fly logs
+# Depuis le Dashboard Render → votre service → "Logs"
+# Ou via CLI Render:
+render logs -s fitness-pro-backend
 
-# SSH dans la machine
-fly ssh console
+# Redéploiement manuel
+# Dashboard → "Manual Deploy" → "Deploy latest commit"
+# Ou via CLI:
+render deploy -s fitness-pro-backend
 
-# Vérifier l'état de l'application
-fly status
+# Exécuter des commandes (migrations, etc.)
+# Via Dashboard → "Shell"
+# Ou SSH:
+render ssh fitness-pro-backend
 
-# Lister les secrets configurés
-fly secrets list
+# Vérifier l'état
+# Dashboard → Metrics (CPU, Memory, Response Time)
 
-# Mettre à jour un secret
-fly secrets set MAIL_MAILER=smtp
-
-# Redémarrer l'application
-fly apps restart fitness-pro-backend
-
-# Ouvrir l'app dans le navigateur
-fly open
+# Gérer les variables d'environnement
+# Dashboard → Environment → Add/Edit variables
 ```
 
 #### Base de Données Production
 
 ```bash
 # Se connecter à PostgreSQL
-fly postgres connect -a fitness-pro-db
+# Depuis le Dashboard Render → Database → "Connect"
+# Copier la commande de connexion externe ou interne
+
+# Connexion via psql:
+psql postgresql://username:password@host/database
 
 # Depuis le terminal psql:
 \l              # Lister les bases de données
@@ -2565,11 +2546,9 @@ fly postgres connect -a fitness-pro-db
 # Exécuter requête SQL
 SELECT id, email, created_at FROM users;
 
-# Backup de la base
-fly postgres backup create
-
-# Lister les backups
-fly postgres backup list
+# Backup automatique
+# Render effectue des backups automatiques selon votre plan
+# Dashboard → Database → "Backups"
 ```
 
 ### Environnement de Production
@@ -2884,7 +2863,7 @@ php artisan migrate:status
 - **Sanctum**: Authentification API
 - **SQLite**: Base de données légère (dev)
 - **PostgreSQL**: Base de données production
-- **Fly.io**: Plateforme de déploiement
+- **Render**: Plateforme de déploiement
 
 ### Commandes Utiles Résumées
 
@@ -2902,10 +2881,9 @@ php artisan config:clear         # Vider config cache
 php artisan route:clear          # Vider routes cache
 
 # PRODUCTION
-fly deploy                       # Déployer sur Fly.io
-fly logs                         # Voir logs production
-fly ssh console                  # SSH dans machine
-fly postgres connect             # Se connecter à la base
+render deploy                    # Déployer sur Render
+render logs                      # Voir logs production
+# Via Dashboard Render pour SSH et PostgreSQL
 
 # DEBUGGING
 tail -f storage/logs/laravel.log # Suivre logs
