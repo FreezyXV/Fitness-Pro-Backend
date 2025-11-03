@@ -10,6 +10,14 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        if (app()->environment('production')) {
+            $this->call([
+                ProductionSeeder::class,
+            ]);
+
+            return;
+        }
+
         if (!User::where('email', 'test@example.com')->exists()) {
             User::create([
                 'name' => 'Test User',

@@ -78,6 +78,22 @@ php artisan migrate
 php artisan serve
 ```
 
+### 🌱 Seeding the Neon Production Database
+
+The production container can now run the seeders on demand. This is useful the first time you deploy to Neon (or after resetting the database).
+
+1. In Render, open your **fitness-pro-backend** service and set the environment variable `RUN_DB_SEEDERS` to `true`.
+2. Trigger a redeploy. During startup you should see `🌱 Running database seeders...` in the logs, and the `ProductionSeeder` will push the static exercise catalogue into Neon.
+3. Once the seed finished, reset `RUN_DB_SEEDERS` to `false` (or delete it) and redeploy again. This prevents the exercises table from being truncated on every restart.
+
+If you ever need to reseed manually without redeploying, exec into the running container and run:
+
+```bash
+php artisan db:seed --force --no-interaction
+```
+
+Because the app now defaults to `ProductionSeeder` when `APP_ENV=production`, the command above seeds only the static data that is safe for production.
+
 ---
 
 ## 4. Schéma de la Base de Données

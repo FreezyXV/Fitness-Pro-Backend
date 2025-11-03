@@ -23,6 +23,12 @@ echo "DB_USERNAME: $DB_USERNAME"
 echo "🗄️  Running database migrations..."
 php artisan migrate --force --no-interaction --verbose
 
+# Optionally run seeders (disabled by default to avoid wiping production data)
+if [ "${RUN_DB_SEEDERS:-false}" = "true" ]; then
+    echo "🌱 Running database seeders..."
+    php artisan db:seed --force --no-interaction
+fi
+
 # Create storage link if it doesn't exist
 if [ ! -L /var/www/html/public/storage ]; then
     echo "🔗 Creating storage link..."

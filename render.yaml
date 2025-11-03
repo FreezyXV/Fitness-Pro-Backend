@@ -66,6 +66,8 @@ services:
         value: https://fitness-pro-frontend.vercel.app
       - key: CORS_SUPPORTS_CREDENTIALS
         value: true
+      - key: RUN_DB_SEEDERS
+        value: false
 
 # Database is hosted on Neon (external)
 # No Render database needed

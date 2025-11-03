@@ -14,9 +14,13 @@ composer install --no-dev --optimize-autoloader --no-interaction
 echo "🗄️  Running database migrations..."
 php artisan migrate --force --no-interaction
 
-# Seed the database
-echo "🌱 Seeding database..."
-php artisan db:seed --force --no-interaction
+# Seed the database when explicitly requested
+if [ "${RUN_DB_SEEDERS:-false}" = "true" ]; then
+    echo "🌱 Seeding database during build..."
+    php artisan db:seed --force --no-interaction
+else
+    echo "🌱 Skipping database seeding during build (set RUN_DB_SEEDERS=true to enable)."
+fi
 
 # Clear and cache configuration
 echo "⚙️  Optimizing Laravel..."
