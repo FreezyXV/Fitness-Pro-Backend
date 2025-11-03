@@ -27,7 +27,7 @@ services:
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_HOST
-        value: nxg-nrqhm06zqx3v8ep-nameless-flower-4g71213w-pooler.c-2.eu-central-1.aws.neon.tech
+        value: ep-nameless-flower-ag7l2i3w-pooler.c-2.eu-central-1.aws.neon.tech
       - key: DB_PORT
         value: 5432
       - key: DB_DATABASE
@@ -35,7 +35,7 @@ services:
       - key: DB_USERNAME
         value: neondb_owner
       - key: DB_PASSWORD
-        value: nxg_NrqHM06zQX3v8ep
+        value: npg_NrWAMO5zQX3v
       - key: DB_SSLMODE
         value: require
       - key: BROADCAST_DRIVER
