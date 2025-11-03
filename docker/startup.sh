@@ -12,9 +12,16 @@ done
 
 echo "✅ Database connection established"
 
+# Show database configuration for debugging
+echo "📊 Database configuration:"
+echo "DB_CONNECTION: $DB_CONNECTION"
+echo "DB_HOST: $DB_HOST"
+echo "DB_DATABASE: $DB_DATABASE"
+echo "DB_USERNAME: $DB_USERNAME"
+
 # Run database migrations
 echo "🗄️  Running database migrations..."
-php artisan migrate --force --no-interaction
+php artisan migrate --force --no-interaction --verbose
 
 # Create storage link if it doesn't exist
 if [ ! -L /var/www/html/public/storage ]; then
