@@ -89,12 +89,19 @@ class AuthService
             Log::error('AuthService: Database error during registration', [
                 'email' => $data['email'] ?? 'unknown',
                 'error' => $e->getMessage(),
-                'code' => $e->getCode()
+                'code' => $e->getCode(),
+                'sql' => $e->getSql() ?? 'N/A',
+                'bindings' => $e->getBindings() ?? []
             ]);
 
             // Handle specific database errors
             if ($e->getCode() === '23505' || str_contains($e->getMessage(), 'unique')) {
                 throw new \Exception('This email address is already registered.');
+            }
+
+            // Re-throw with more detailed error message in development
+            if (app()->environment('local', 'development')) {
+                throw new \Exception('Database error: ' . $e->getMessage());
             }
 
             throw new \Exception('Database error occurred. Please try again later.');
