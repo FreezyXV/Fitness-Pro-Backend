@@ -12,6 +12,7 @@ class ProductionSeeder extends Seeder
             ExerciseSeeder::class,
             WorkoutPlansSeeder::class,
             WorkoutTemplateDetailsSeeder::class,
+            GoalsSeeder::class,
             AlimentSeeder::class,
         ]);
     }

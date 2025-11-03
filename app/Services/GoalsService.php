@@ -20,11 +20,13 @@ class GoalsService
 
     public function getGoals(User $user, array $filters = []): array
     {
-        $goals = $this->goalRepository->getForUser($user, $filters);
+        $this->ensureDefaultGoalsForUser($user);
 
-        return $goals->map(function($goal) {
-            return $goal->toArray();
-        })->toArray();
+        return $this->goalRepository
+            ->getForUser($user, $filters)
+            ->map(fn(Goal $goal) => $goal->toArray())
+            ->values()
+            ->toArray();
     }
 
     public function createGoal(User $user, array $data): Goal
@@ -114,5 +116,32 @@ class GoalsService
         }
 
         return $request->validate($rules);
+    }
+    protected function ensureDefaultGoalsForUser(User $user): void
+    {
+        if ($this->goalRepository->countForUser($user) > 0) {
+            return;
+        }
+
+        $templates = $this->goalRepository->getTemplates();
+
+        if ($templates->isEmpty()) {
+            return;
+        }
+
+        $templates->each(function(Goal $template) use ($user) {
+            $this->goalRepository->create([
+                'user_id' => $user->id,
+                'title' => $template->title,
+                'description' => $template->description,
+                'category' => $template->category,
+                'target_value' => $template->target_value,
+                'current_value' => 0,
+                'unit' => $template->unit,
+                'target_date' => $template->target_date,
+                'status' => 'not-started',
+                'priority' => $template->priority ?? 3,
+            ]);
+        });
     }
 }

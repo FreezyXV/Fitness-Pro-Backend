@@ -7,9 +7,7 @@ use App\Models\Workout;
 use App\Models\User;
 use App\Models\Exercise;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
+use App\Support\SystemUserResolver;
 
 class WorkoutPlansSeeder extends Seeder
 {
@@ -51,37 +49,10 @@ class WorkoutPlansSeeder extends Seeder
 
     private function getOrCreateUser(): User
     {
-        $systemUserId = (int) config('app.system_user_id', 1);
-        $systemUserEmail = config('app.system_user_email', 'system@fitnesspro.app');
-        $systemUserName = config('app.system_user_name', 'Fitness Pro System');
+        $user = SystemUserResolver::resolve();
 
-        $user = User::find($systemUserId);
-
-        if (!$user) {
-            $user = User::where('email', $systemUserEmail)->first();
-        }
-
-        if (!$user) {
-            $user = User::create([
-                'name' => $systemUserName,
-                'first_name' => 'Fitness',
-                'last_name' => 'Assistant',
-                'email' => $systemUserEmail,
-                'password' => Hash::make(Str::random(32)),
-                'email_verified_at' => now(),
-            ]);
-
+        if ($user->wasRecentlyCreated) {
             echo "✅ Created system template user: {$user->email} (ID: {$user->id})\n";
-        } else {
-            // Ensure name/email stay in sync for system user
-            $user->updateQuietly([
-                'name' => $systemUserName,
-                'email' => $systemUserEmail,
-            ]);
-        }
-
-        if ($user->id !== $systemUserId) {
-            echo "⚠️ System user ID mismatch. Update SYSTEM_USER_ID env to {$user->id} to use this account for templates.\n";
         }
 
         return $user;

@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Workout;
 use App\Repositories\Contracts\WorkoutRepositoryInterface;
 use Illuminate\Support\Collection;
+use App\Support\SystemUserResolver;
 
 class WorkoutRepository extends BaseRepository implements WorkoutRepositoryInterface
 {
@@ -22,15 +23,17 @@ class WorkoutRepository extends BaseRepository implements WorkoutRepositoryInter
      */
     public function getTemplatesForUser(User $user, array $filters = []): Collection
     {
+        $systemUserIds = SystemUserResolver::ids();
+
         $query = $this->newQuery()
             ->where(function($q) {
                 // Include templates (true) and seeded workouts (null)
                 $q->where('is_template', true)->orWhereNull('is_template');
             })
-            ->where(function($q) use ($user) {
+            ->where(function($q) use ($user, $systemUserIds) {
                 // Show user's own templates OR public templates
                 $q->where('user_id', $user->id)
-                  ->orWhere('user_id', config('app.system_user_id'));
+                  ->orWhereIn('user_id', $systemUserIds);
             })
             ->select([
                 'id', 'name', 'description', 'type', 'category', 'difficulty', 'difficulty_level',
@@ -66,8 +69,10 @@ class WorkoutRepository extends BaseRepository implements WorkoutRepositoryInter
      */
     public function getPublicTemplates(array $filters = []): Collection
     {
+        $systemUserIds = SystemUserResolver::ids();
+
         $query = $this->newQuery()
-            ->where('user_id', config('app.system_user_id'))
+            ->whereIn('user_id', $systemUserIds)
             ->where(function($q) {
                 $q->where('is_template', true)->orWhereNull('is_template');
             })
@@ -114,11 +119,13 @@ class WorkoutRepository extends BaseRepository implements WorkoutRepositoryInter
      */
     public function findForUser(int $workoutId, User $user): ?Workout
     {
+        $systemUserIds = SystemUserResolver::ids();
+
         return $this->newQuery()
             ->where('id', $workoutId)
-            ->where(function($q) use ($user) {
+            ->where(function($q) use ($user, $systemUserIds) {
                 $q->where('user_id', $user->id)
-                  ->orWhere('user_id', config('app.system_user_id'));
+                  ->orWhereIn('user_id', $systemUserIds);
             })
             ->first();
     }
@@ -128,10 +135,12 @@ class WorkoutRepository extends BaseRepository implements WorkoutRepositoryInter
      */
     public function getByCategory(string $category, User $user): Collection
     {
+        $systemUserIds = SystemUserResolver::ids();
+
         return $this->newQuery()
-            ->where(function($q) use ($user) {
+            ->where(function($q) use ($user, $systemUserIds) {
                 $q->where('user_id', $user->id)
-                  ->orWhere('user_id', config('app.system_user_id'));
+                  ->orWhereIn('user_id', $systemUserIds);
             })
             ->where(function($q) use ($category) {
                 $q->where('type', $category)

@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\Goal;
 use App\Models\User;
 use App\Repositories\Contracts\GoalRepositoryInterface;
+use App\Support\SystemUserResolver;
 use Illuminate\Support\Collection;
 
 class GoalRepository extends BaseRepository implements GoalRepositoryInterface
@@ -65,5 +66,20 @@ class GoalRepository extends BaseRepository implements GoalRepositoryInterface
                 'current_value' => 0,
                 'status' => 'not-started',
             ]);
+    }
+
+    public function countForUser(User $user): int
+    {
+        return $this->newQuery()
+            ->where('user_id', $user->id)
+            ->count();
+    }
+
+    public function getTemplates(): Collection
+    {
+        return $this->newQuery()
+            ->whereIn('user_id', SystemUserResolver::ids())
+            ->orderBy('priority')
+            ->get();
     }
 }

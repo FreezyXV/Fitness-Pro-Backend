@@ -9,6 +9,7 @@ use App\Services\StatisticsService;
 use App\Services\CacheService;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Log;
+use App\Support\SystemUserResolver;
 
 class WorkoutController extends BaseController
 {
@@ -40,16 +41,18 @@ class WorkoutController extends BaseController
                 'filters' => $filters
             ]);
 
-            $templates = $this->cacheService->getWorkoutTemplates($user->id, $filters, function() use ($user, $request) {
+            $systemUserIds = SystemUserResolver::ids();
+
+            $templates = $this->cacheService->getWorkoutTemplates($user->id, $filters, function() use ($user, $request, $systemUserIds) {
                 try {
                     $query = Workout::where(function($q) {
                                       // Include templates (true) and seeded workouts (null)
                                       $q->where('is_template', true)->orWhereNull('is_template');
                                   })
-                                  ->where(function($q) use ($user) {
+                                  ->where(function($q) use ($user, $systemUserIds) {
                                       // Show user's own templates OR public templates (user_id = 1 acts as system templates)
                                       $q->where('user_id', $user->id)
-                                        ->orWhere('user_id', config('app.system_user_id')); // Include system templates
+                                        ->orWhereIn('user_id', $systemUserIds); // Include system templates
                                   })
                                   ->select([
                                       'id', 'name', 'description', 'type', 'category', 'difficulty', 'difficulty_level',

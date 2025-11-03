@@ -27,4 +27,14 @@ interface GoalRepositoryInterface extends RepositoryInterface
      * Reset all goals for a specific user.
      */
     public function resetAllForUser(User $user): int;
+
+    /**
+     * Count goals for a user.
+     */
+    public function countForUser(User $user): int;
+
+    /**
+     * Retrieve template goals.
+     */
+    public function getTemplates(): Collection;
 }
