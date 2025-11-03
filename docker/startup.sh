@@ -25,8 +25,9 @@ php artisan migrate --force --no-interaction --verbose
 
 # Optionally run seeders (disabled by default to avoid wiping production data)
 if [ "${RUN_DB_SEEDERS:-false}" = "true" ]; then
-    echo "🌱 Running database seeders..."
-    php artisan db:seed --force --no-interaction
+    SEEDER_CLASS="${DB_SEEDER_CLASS:-DatabaseSeeder}"
+    echo "🌱 Running database seeders using ${SEEDER_CLASS}..."
+    php artisan db:seed --class="${SEEDER_CLASS}" --force --no-interaction
 fi
 
 # Create storage link if it doesn't exist

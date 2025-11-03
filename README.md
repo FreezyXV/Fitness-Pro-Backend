@@ -82,9 +82,9 @@ php artisan serve
 
 The production container can now run the seeders on demand. This is useful the first time you deploy to Neon (or after resetting the database).
 
-1. In Render, open your **fitness-pro-backend** service and set the environment variable `RUN_DB_SEEDERS` to `true`.
-2. Trigger a redeploy. During startup you should see `🌱 Running database seeders...` in the logs, and the `ProductionSeeder` will push the static exercise catalogue into Neon.
-3. Once the seed finished, reset `RUN_DB_SEEDERS` to `false` (or delete it) and redeploy again. This prevents the exercises table from being truncated on every restart.
+1. In Render, open your **fitness-pro-backend** service and set `RUN_DB_SEEDERS=true` (the `DB_SEEDER_CLASS` variable is already set to `ProductionSeeder` in `render.yaml`, but double-check if you manage env vars from the dashboard).
+2. Trigger a redeploy. During startup you should see `🌱 Running database seeders using ProductionSeeder...` in the logs; this seeds exercises, nutrition items and shared workout templates for the system user.
+3. Once the seed finished, reset `RUN_DB_SEEDERS` to `false` (or delete it) and redeploy again. This prevents the tables from being reseeded on every restart.
 
 If you ever need to reseed manually without redeploying, exec into the running container and run:
 

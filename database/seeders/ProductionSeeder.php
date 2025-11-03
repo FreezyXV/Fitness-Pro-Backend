@@ -10,7 +10,9 @@ class ProductionSeeder extends Seeder
     {
         $this->call([
             ExerciseSeeder::class,
+            WorkoutPlansSeeder::class,
+            WorkoutTemplateDetailsSeeder::class,
+            AlimentSeeder::class,
         ]);
     }
 }
-

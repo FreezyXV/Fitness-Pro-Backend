@@ -7,7 +7,9 @@ use App\Models\Workout;
 use App\Models\User;
 use App\Models\Exercise;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class WorkoutPlansSeeder extends Seeder
 {
@@ -49,25 +51,39 @@ class WorkoutPlansSeeder extends Seeder
 
     private function getOrCreateUser(): User
     {
-        // Try to find user by specific email first
-        $user = User::where('email', 'i_841@mail.ru')->first();
-        
+        $systemUserId = (int) config('app.system_user_id', 1);
+        $systemUserEmail = config('app.system_user_email', 'system@fitnesspro.app');
+        $systemUserName = config('app.system_user_name', 'Fitness Pro System');
+
+        $user = User::find($systemUserId);
+
         if (!$user) {
-            // If not found, use the first available user
-            $user = User::first();
+            $user = User::where('email', $systemUserEmail)->first();
         }
-        
+
         if (!$user) {
-            // If no users exist, create one
             $user = User::create([
-                'name' => 'Fitness Admin',
-                'email' => 'admin@fitnessapp.com',
-                'password' => bcrypt('password'),
+                'name' => $systemUserName,
+                'first_name' => 'Fitness',
+                'last_name' => 'Assistant',
+                'email' => $systemUserEmail,
+                'password' => Hash::make(Str::random(32)),
                 'email_verified_at' => now(),
             ]);
-            echo "✅ Created new user: {$user->email}\n";
+
+            echo "✅ Created system template user: {$user->email} (ID: {$user->id})\n";
+        } else {
+            // Ensure name/email stay in sync for system user
+            $user->updateQuietly([
+                'name' => $systemUserName,
+                'email' => $systemUserEmail,
+            ]);
         }
-        
+
+        if ($user->id !== $systemUserId) {
+            echo "⚠️ System user ID mismatch. Update SYSTEM_USER_ID env to {$user->id} to use this account for templates.\n";
+        }
+
         return $user;
     }
 

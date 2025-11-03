@@ -16,8 +16,9 @@ php artisan migrate --force --no-interaction
 
 # Seed the database when explicitly requested
 if [ "${RUN_DB_SEEDERS:-false}" = "true" ]; then
-    echo "🌱 Seeding database during build..."
-    php artisan db:seed --force --no-interaction
+    SEEDER_CLASS="${DB_SEEDER_CLASS:-DatabaseSeeder}"
+    echo "🌱 Seeding database during build using ${SEEDER_CLASS}..."
+    php artisan db:seed --class="${SEEDER_CLASS}" --force --no-interaction
 else
     echo "🌱 Skipping database seeding during build (set RUN_DB_SEEDERS=true to enable)."
 fi

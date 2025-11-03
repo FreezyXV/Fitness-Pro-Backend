@@ -570,7 +570,7 @@ class ExerciseSeeder extends Seeder
                 'name' => '90:90 Hip Crossover',
                 'body_part' => 'mobility',
                 'description' => 'Mobilisation des hanches en position 90:90.',
-                'video_url' => 'https://imgur.com/SwccHLF',
+                'video_url' => 'https://imgur.com/SwccHLF.mp4',
                 'duration' => 1,
                 'difficulty' => 'beginner',
                 'muscle_groups' => ['fléchisseurs de hanche', 'rotateurs de hanche'],

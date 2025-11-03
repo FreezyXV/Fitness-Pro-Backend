@@ -68,6 +68,8 @@ services:
         value: true
       - key: RUN_DB_SEEDERS
         value: false
+      - key: DB_SEEDER_CLASS
+        value: ProductionSeeder
 
 # Database is hosted on Neon (external)
 # No Render database needed
