@@ -37,7 +37,7 @@ return new class extends Migration
         // Workout exercises pivot table indexes
         if (Schema::hasTable('workout_exercises')) {
             Schema::table('workout_exercises', function (Blueprint $table) {
-                $table->index(['workout_id', 'order'], 'workout_exercises_workout_order_idx');
+                $table->index(['workout_id', 'order_index'], 'workout_exercises_workout_order_idx');
                 $table->index(['exercise_id', 'workout_id'], 'workout_exercises_exercise_workout_idx');
             });
         }
