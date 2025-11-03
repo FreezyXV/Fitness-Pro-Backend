@@ -27,25 +27,15 @@ services:
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_HOST
-        fromDatabase:
-          name: fitness-pro-db
-          property: host
+        value: nxg-nrqhm06zqx3v8ep-nameless-flower-4g71213w-pooler.c-2.eu-central-1.aws.neon.tech
       - key: DB_PORT
-        fromDatabase:
-          name: fitness-pro-db
-          property: port
+        value: 5432
       - key: DB_DATABASE
-        fromDatabase:
-          name: fitness-pro-db
-          property: database
+        value: neondb
       - key: DB_USERNAME
-        fromDatabase:
-          name: fitness-pro-db
-          property: user
+        value: neondb_owner
       - key: DB_PASSWORD
-        fromDatabase:
-          name: fitness-pro-db
-          property: password
+        value: nxg_NrqHM06zQX3v8ep
       - key: DB_SSLMODE
         value: require
       - key: BROADCAST_DRIVER
@@ -77,10 +67,5 @@ services:
       - key: CORS_SUPPORTS_CREDENTIALS
         value: true
 
-# PostgreSQL Database
-databases:
-  - name: fitness-pro-db
-    databaseName: fitness_pro_db
-    plan: starter # free, starter, standard, pro
-    region: frankfurt
-    postgresMajorVersion: 15
+# Database is hosted on Neon (external)
+# No Render database needed
