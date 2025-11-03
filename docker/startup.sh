@@ -1,0 +1,34 @@
+#!/bin/sh
+set -e
+
+echo "🚀 Starting FitnessPro Backend..."
+
+# Wait for database to be ready
+echo "⏳ Waiting for database connection..."
+until php artisan db:show > /dev/null 2>&1; do
+    echo "Database is unavailable - sleeping"
+    sleep 2
+done
+
+echo "✅ Database connection established"
+
+# Run database migrations
+echo "🗄️  Running database migrations..."
+php artisan migrate --force --no-interaction
+
+# Create storage link if it doesn't exist
+if [ ! -L /var/www/html/public/storage ]; then
+    echo "🔗 Creating storage link..."
+    php artisan storage:link || true
+fi
+
+# Clear and cache configuration for better performance
+echo "⚙️  Optimizing application..."
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+
+echo "✨ Application ready!"
+
+# Start supervisor to manage nginx and php-fpm
+exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf

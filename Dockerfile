@@ -95,8 +95,12 @@ RUN php artisan route:cache \
 # Create nginx directories
 RUN mkdir -p /var/log/nginx /var/cache/nginx
 
+# Copy and set permissions for startup script
+COPY docker/startup.sh /usr/local/bin/startup.sh
+RUN chmod +x /usr/local/bin/startup.sh
+
 # Expose port
 EXPOSE 80
 
-# Start services
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+# Start services with startup script
+CMD ["/usr/local/bin/startup.sh"]

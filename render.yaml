@@ -46,6 +46,8 @@ services:
         fromDatabase:
           name: fitness-pro-db
           property: password
+      - key: DB_SSLMODE
+        value: require
       - key: BROADCAST_DRIVER
         value: log
       - key: CACHE_STORE
@@ -63,14 +65,22 @@ services:
       - key: FRONTEND_URL
         value: https://fitness-pro-frontend.vercel.app
       - key: SANCTUM_STATEFUL_DOMAINS
-        value: fitness-pro-frontend.vercel.app,localhost:4200
+        value: fitness-pro-frontend.vercel.app
+      - key: SESSION_SECURE_COOKIE
+        value: true
+      - key: SESSION_SAME_SITE
+        value: none
       - key: SESSION_DOMAIN
-        value: .onrender.com
+        value:
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://fitness-pro-frontend.vercel.app
+      - key: CORS_SUPPORTS_CREDENTIALS
+        value: true
 
 # PostgreSQL Database
 databases:
   - name: fitness-pro-db
-    databaseName: fitness_pro
+    databaseName: fitness_pro_db
     plan: starter # free, starter, standard, pro
     region: frankfurt
     postgresMajorVersion: 15
