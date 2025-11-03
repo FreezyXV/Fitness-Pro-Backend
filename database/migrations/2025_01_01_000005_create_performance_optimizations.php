@@ -51,9 +51,9 @@ return new class extends Migration
 
         Schema::table('workout_exercises', function (Blueprint $table) {
             // Performance and progress queries
-            $table->index(['exercise_id', 'actual_weight', 'created_at']);
+            $table->index(['exercise_id', 'weight_used', 'created_at']);
             $table->index(['workout_id', 'is_personal_record']);
-            $table->index(['exercise_id', 'is_personal_record', 'actual_weight']);
+            $table->index(['exercise_id', 'is_personal_record', 'weight_used']);
 
             // Progress tracking
             $table->index(['exercise_id', 'completion_percentage', 'created_at']);
