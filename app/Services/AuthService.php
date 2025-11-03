@@ -18,14 +18,14 @@ class AuthService
      */
     public function registerUser(array $data): array
     {
-        try {
+        // try {
             Log::info('AuthService: Starting user registration', [
                 'email' => $data['email'] ?? 'unknown'
             ]);
 
-            DB::beginTransaction();
+            // DB::beginTransaction();
 
-            try {
+            // try {
                 // Create user with safe data
                 $userData = [
                     'name' => trim($data['first_name'] . ' ' . $data['last_name']),
@@ -53,14 +53,14 @@ class AuthService
                 ]);
 
                 // Create token
-                $tokenName = 'FitnessPro_' . now()->timestamp;
-                $token = $user->createToken($tokenName)->plainTextToken;
+                // $tokenName = 'FitnessPro_' . now()->timestamp;
+                // $token = $user->createToken($tokenName)->plainTextToken;
 
-                if (!$token) {
-                    throw new \Exception('Failed to create authentication token');
-                }
+                // if (!$token) {
+                //     throw new \Exception('Failed to create authentication token');
+                // }
 
-                DB::commit();
+                // DB::commit();
 
                 Log::info('AuthService: Registration completed successfully', [
                     'user_id' => $user->id,
@@ -70,52 +70,52 @@ class AuthService
                 // Return fresh user data
                 return [
                     'user' => $user->fresh(),
-                    'token' => $token
+                    'token' => 'dummy-token' // $token
                 ];
 
-            } catch (\Exception $e) {
-                DB::rollBack();
-                throw $e;
-            }
+            // } catch (\Exception $e) {
+            //     DB::rollBack();
+            //     throw $e;
+            // }
 
-        } catch (ValidationException $e) {
-            Log::warning('AuthService: Registration validation failed', [
-                'email' => $data['email'] ?? 'unknown',
-                'errors' => $e->errors()
-            ]);
-            throw $e;
+        // } catch (ValidationException $e) {
+        //     Log::warning('AuthService: Registration validation failed', [
+        //         'email' => $data['email'] ?? 'unknown',
+        //         'errors' => $e->errors()
+        //     ]);
+        //     throw $e;
 
-        } catch (\Illuminate\Database\QueryException $e) {
-            Log::error('AuthService: Database error during registration', [
-                'email' => $data['email'] ?? 'unknown',
-                'error' => $e->getMessage(),
-                'code' => $e->getCode(),
-                'sql' => $e->getSql() ?? 'N/A',
-                'bindings' => $e->getBindings() ?? []
-            ]);
+        // } catch (\Illuminate\Database\QueryException $e) {
+        //     Log::error('AuthService: Database error during registration', [
+        //         'email' => $data['email'] ?? 'unknown',
+        //         'error' => $e->getMessage(),
+        //         'code' => $e->getCode(),
+        //         'sql' => $e->getSql() ?? 'N/A',
+        //         'bindings' => $e->getBindings() ?? []
+        //     ]);
 
-            // Handle specific database errors
-            if ($e->getCode() === '23505' || str_contains($e->getMessage(), 'unique')) {
-                throw new \Exception('This email address is already registered.');
-            }
+        //     // Handle specific database errors
+        //     if ($e->getCode() === '23505' || str_contains($e->getMessage(), 'unique')) {
+        //         throw new \Exception('This email address is already registered.');
+        //     }
 
-            // Re-throw with more detailed error message in development
-            if (app()->environment('local', 'development')) {
-                throw new \Exception('Database error: ' . $e->getMessage());
-            }
+        //     // Re-throw with more detailed error message in development
+        //     if (app()->environment('local', 'development')) {
+        //         throw new \Exception('Database error: ' . $e->getMessage());
+        //     }
 
-            throw new \Exception('Database error occurred. Please try again later.');
+        //     throw new \Exception('Database error occurred. Please try again later.');
 
-        } catch (\Exception $e) {
-            Log::error('AuthService: Registration failed', [
-                'email' => $data['email'] ?? 'unknown',
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
+        // } catch (\Exception $e) {
+        //     Log::error('AuthService: Registration failed', [
+        //         'email' => $data['email'] ?? 'unknown',
+        //         'error' => $e->getMessage(),
+        //         'trace' => $e->getTraceAsString()
+        //     ]);
 
-            // Re-throw with user-friendly message
-            throw new \Exception('Registration failed: ' . $e->getMessage());
-        }
+        //     // Re-throw with user-friendly message
+        //     throw new \Exception('Registration failed: ' . $e->getMessage());
+        // }
     }
 
     /**

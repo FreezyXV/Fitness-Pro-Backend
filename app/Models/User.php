@@ -48,7 +48,6 @@ class User extends Authenticatable
 
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'password' => 'hashed',
         'birth_date' => 'date',
         'date_of_birth' => 'date',
         'goals' => 'array',
