@@ -58,6 +58,9 @@
 config.json
 config-local.json
 
+# Local PHP Configuration (Development Only)
+php.ini
+
 # Laravel Homestead
 Homestead.json
 Homestead.yaml

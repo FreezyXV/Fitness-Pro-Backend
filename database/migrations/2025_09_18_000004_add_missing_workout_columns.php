@@ -79,16 +79,27 @@ return new class extends Migration
     /**
      * Reverse the migrations.
      */
-    public function down(): void
-    {
-        Schema::table('workouts', function (Blueprint $table) {
-            $columns = ['frequency', 'goal', 'equipment', 'intensity', 'type', 'body_focus', 'difficulty'];
+        public function down(): void
+        {
+            Schema::table('workouts', function (Blueprint $table) {
+                if (DB::getDriverName() === 'sqlite') {
+                    $sm = Schema::getConnection()->getDoctrineSchemaManager();
+                    $indexes = $sm->listTableIndexes('workouts');
 
-            foreach ($columns as $column) {
-                if (Schema::hasColumn('workouts', $column)) {
-                    $table->dropColumn($column);
+                    if (isset($indexes['workouts_focus_intensity_type_index'])) {
+                        $table->dropIndex('workouts_focus_intensity_type_index');
+                    }
+                    if (isset($indexes['workouts_type_difficulty_index'])) {
+                        $table->dropIndex('workouts_type_difficulty_index');
+                    }
                 }
-            }
-        });
-    }
-};
+    
+                $columns = ['frequency', 'goal', 'equipment', 'intensity', 'type', 'body_focus', 'difficulty'];
+    
+                foreach ($columns as $column) {
+                    if (Schema::hasColumn('workouts', $column)) {
+                        $table->dropColumn($column);
+                    }
+                }
+            });
+        }};

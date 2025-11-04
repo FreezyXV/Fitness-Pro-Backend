@@ -1,350 +1,461 @@
-# 🏋️ FitnessPro - Documentation Complète de l'API Backend
+# FitnessPro Backend
 
-Ce document fournit une description détaillée de l'API backend pour l'application FitnessPro. Il est destiné aux développeurs qui souhaitent comprendre son architecture, contribuer à son développement ou l'utiliser.
+Backend API built with Laravel 12 that powers the FitnessPro platform (Angular SPA). This document is designed as a **guided tour** of the codebase: why technologies were selected, how requests flow, how data is persisted, and how to extend or operate the stack safely.
 
-## 1. Philosophie du Projet
-
-L'objectif est de fournir une API performante, sécurisée et facile à maintenir. Pour cela, nous suivons les meilleures pratiques de l'écosystème Laravel, en mettant l'accent sur :
-- **La Séparation des Responsabilités** : Chaque partie du code a un rôle unique (les contrôleurs gèrent les requêtes, les services la logique métier, etc.).
-- **La Lisibilité du Code** : Un code clair est plus facile à maintenir et à faire évoluer.
-- **La Testabilité** : L'architecture est conçue pour faciliter l'écriture de tests unitaires et fonctionnels.
+> Looking for the French version? See `READMEFR.md` in the same folder.
 
 ---
 
-## 2. Technologies et Architecture
+## 📚 Table of contents
 
-### Technologies Principales
-
-| Technologie | Version | Rôle et Justification |
-| :--- | :--- | :--- |
-| **PHP** | `^8.2` | Le langage de programmation principal. La version 8.2+ offre des améliorations de performance, une syntaxe moderne et un typage plus strict. |
-| **Laravel** | `^12.0` | Le framework principal. Il fournit une structure solide, sécurisée et élégante pour le routing, l'ORM (Eloquent), la gestion des files d'attente, et plus encore. |
-| **Laravel Sanctum**| `^4.2` | **Gestion de l'authentification.** Idéal pour les applications frontends (SPA) comme Angular, offrant une authentification simple et sécurisée par tokens, sans la complexité d'OAuth2. |
-| **PostgreSQL** | `(Prod)` | **Base de données de production.** Choisi pour sa robustesse, sa fiabilité et ses fonctionnalités avancées (comme le support JSONB) à grande échelle. |
-| **SQLite** | `(Dev)` | **Base de données de développement.** Utilisé pour sa simplicité extrême (un seul fichier, aucune configuration), ce qui rend le démarrage d'un nouvel environnement de dev quasi instantané. |
-
-### Architecture : Le Flux d'une Requête
-
-Nous utilisons une architecture en couches inspirée du Domain-Driven Design pour garantir une séparation claire des responsabilités. Le cycle de vie d'une requête est le suivant :
-
-**Requête HTTP → Route → Contrôleur → Service → Repository → Modèle → Base de Données**
-
-1.  **Route (`routes/api.php`)** : Le point d'entrée. Il intercepte la requête HTTP (ex: `GET /api/workouts`) et la dirige vers la méthode du contrôleur approprié.
-
-2.  **Contrôleur (`app/Http/Controllers`)** : Le chef de gare. Son rôle est de valider les données de la requête (en utilisant les `FormRequest` de Laravel) et d'appeler la méthode du service correspondant. Il ne contient **aucune logique métier**.
-    - *Exemple : `WorkoutController.php`*
-
-3.  **Service (`app/Services`)** : Le cerveau de l'application. C'est ici que réside la logique métier complexe. Par exemple, `WorkoutService` pourrait contenir une méthode `completeWorkoutSession` qui calcule les calories brûlées, met à jour les objectifs de l'utilisateur et lui attribue des points d'expérience.
-    - **Pourquoi ?** Isoler la logique ici la rend réutilisable (par une commande CLI, un job, etc.) et facile à tester unitairement.
-    - *Exemple : `GoalsService.php`*
-
-4.  **Repository (`app/Repositories`)** : La couche d'abstraction de la base de données. C'est le seul endroit où l'on formule des requêtes vers la base de données. Nous utilisons ce pattern avec `WorkoutRepository` et `GoalRepository`.
-    - **Pourquoi ?** Cela découple totalement la logique métier de l'implémentation de la base de données (Eloquent). Si nous décidions de changer d'ORM ou de source de données, seul le code du repository serait à modifier.
-    - *Exemple : `GoalRepository.php`*
-
-5.  **Modèle (`app/Models`)** : La représentation des tables de la base de données. Les modèles Eloquent gèrent les relations entre les tables (ex: un `User` a plusieurs `Workout`) et peuvent contenir de la logique simple liée au modèle lui-même (mutators, accessors).
-    - *Exemple : `User.php`, `Workout.php`*
+1. [What lives in this backend?](#what-lives-in-this-backend)
+2. [Technology stack & rationale](#technology-stack--rationale)
+3. [Domain modules at a glance](#domain-modules-at-a-glance)
+4. [Architecture & request flow](#architecture--request-flow)
+5. [Data persistence & schema](#data-persistence--schema)
+6. [External services & integrations](#external-services--integrations)
+7. [Configuration & environment](#configuration--environment)
+8. [Local development](#local-development)
+9. [Database seeding (dev & prod)](#database-seeding-dev--prod)
+10. [Authentication & security model](#authentication--security-model)
+11. [API contract & error handling](#api-contract--error-handling)
+12. [Logging, monitoring, background jobs](#logging-monitoring-background-jobs)
+13. [Testing & quality gates](#testing--quality-gates)
+14. [Contribution workflow](#contribution-workflow)
+15. [Troubleshooting](#troubleshooting)
 
 ---
 
-## 3. Démarrage Rapide
+## What lives in this backend?
 
-Suivez ces étapes pour lancer le serveur en local.
+The Laravel API exposes everything the FitnessPro frontend needs:
 
-```bash
-# 1. Cloner le projet et naviguer dans le dossier backend
-# git clone ...
-cd backend
+- **User management** – registration/login, profile, password reset, auth tokens.
+- **Workout engine** – templates, scheduled sessions, completed workouts, streaks.
+- **Goal tracking** – smart goals with progress, achievements, status changes.
+- **Nutrition assistant** – food database, calorie calculator, recommendations.
+- **Calendar & notifications** – tasks, reminders, in-app + email notifications.
+- **Analytics** – dashboards, stats services, streak calculators.
 
-# 2. Installer les dépendances PHP via Composer
-composer install
+All features are structured so the business logic sits in dedicated services. This makes the codebase testable and maintainable when adding new domains (challenges, community feed, etc.).
 
-# 3. Configurer l'environnement
-# Copie le fichier d'exemple. Ce fichier est ignoré par Git.
-cp .env.example .env
+---
 
-# Génère la clé de chiffrement unique pour l'application
-php artisan key:generate
+## Technology stack & rationale
 
-# 4. Préparer la base de données locale (SQLite)
-# Crée le fichier vide qui servira de base de données
-touch database/database.sqlite
+| Layer | Technology | Reason |
+| --- | --- | --- |
+| Runtime | **PHP 8.2** | Modern typing (readonly, enums), faster JIT, long-term support. |
+| Framework | **Laravel 12** | Unified toolchain: routing, validation, Eloquent ORM, queues, notifications, mail. |
+| Auth | **Laravel Sanctum** | Lightweight token auth designed for SPAs (Angular). |
+| Database | **PostgreSQL (production)** | Reliable relational DB with JSONB support, indexing, window functions. |
+| Dev DB | **SQLite** | Zero config, perfect for local development and tests. |
+| Queues | **Database driver (default)** | Simple queue storage; can switch to Redis/SQS for scale. |
+| Mail | **Laravel Notifications + Mailables** | Easy templating, queue integration, supports multiple channels. |
+| Container | **Docker (optional)** | Sail-compatible; Render deployment uses PHP FPM + Nginx. |
 
-# 5. Lancer les migrations pour créer la structure de la base de données
-php artisan migrate
+> The stack intentionally favours boring, well-supported technologies that every PHP team knows how to run.
 
-# 6. Lancer le serveur de développement
-# Le backend sera accessible sur http://localhost:8000
-php artisan serve
+---
+
+## Domain modules at a glance
+
+| Module | Key files | What it does |
+| --- | --- | --- |
+| **Authentication** | `AuthController`, `AuthService`, `ForgotPasswordRequest`, `ResetPasswordNotification` | Login, registration, token issuance, password reset (token & direct). |
+| **Workouts** | `WorkoutController`, `WorkoutService`, `WorkoutRepository`, `Workout`, `WorkoutExercise` | Template management, execution logs, streak updates, portfolio seed. |
+| **Goals** | `GoalController`, `GoalService`, `GoalRepository`, `Goal` | CRUD on smart goals, progress computation, completion/activation flows. |
+| **Calendar** | `CalendarController`, `CalendarTask`, `CalendarService` | Calendar events, reminders linked to workouts/goals. |
+| **Notifications** | `NotificationController`, `WorkoutNotificationService`, Laravel notifications | DB + mail notifications for workouts, achievements, password reset. |
+| **Nutrition** | `NutritionController`, `NutritionService`, `food-database.ts` (front) | Food catalogue, calorie calculator, recommendations. |
+| **Analytics** | `DashboardController`, `StatisticsService`, `StreakCalculatorService` | Dashboard KPIs, streaks, charts data aggregation. |
+| **Middleware** | `WorkoutApiLogger`, `WorkoutApiRateLimit`, `ValidateWorkoutOwnership` | Logging, rate limits, ownership checks for secured resources. |
+| **Seeders** | `ProductionSeeder`, `ExerciseSeeder`, `WorkoutPlansSeeder`, dev-seed routes | Populate exercises, workouts, nutrition, users for demo/production. |
+
+Each module follows the same pattern: controller → service → repository/model → notification/jobs. Once you understand one module, the rest feel familiar.
+
+---
+
+## Architecture & request flow
+
+### Layered layout
+
+```
+HTTP Request
+   │
+   ▼
+routes/api.php
+   │  maps verb + URI
+   ▼
+Controller (thin)
+   │  validates request data (FormRequest)
+   ▼
+Service (business logic)
+   │  orchestrates repositories, jobs, notifications
+   ▼
+Repository / Model
+   │  executes database queries (Eloquent)
+   ▼
+Database (PostgreSQL / SQLite)
+   │
+   ▼
+JSON response (BaseController helpers)
 ```
 
-### 🌱 Seeding the Neon Production Database
+### Detailed sequence (example: complete a scheduled workout)
 
-The production container can now run the seeders on demand. This is useful the first time you deploy to Neon (or after resetting the database).
+```
+User taps "Mark Workout Complete" on Angular
+       │
+       ├──> Frontend calls POST /api/workouts/logs
+       │
+       ├──> WorkoutController@completeLog
+       │        ├─ validates payload (WorkoutCompleteRequest)
+       │        └─ calls WorkoutService::completeLog
+       │
+       ├──> WorkoutService
+       │        ├─ loads workout + exercises via repository
+       │        ├─ stores stats in workout_exercises pivot
+       │        ├─ updates goals via GoalsService
+       │        ├─ updates streak via StreakCalculatorService
+       │        └─ dispatches notifications/jobs as needed
+       │
+       ├──> Repositories / Models run DB updates
+       │
+       ├──> Service returns DTO
+       │
+       └──> Controller wraps DTO with success JSON response
+```
 
-1. In Render, open your **fitness-pro-backend** service and set `RUN_DB_SEEDERS=true` (the `DB_SEEDER_CLASS` variable is already set to `ProductionSeeder` in `render.yaml`, but double-check if you manage env vars from the dashboard).
-2. Trigger a redeploy. During startup you should see `🌱 Running database seeders using ProductionSeeder...` in the logs; this seeds exercises, nutrition items and shared workout templates for the system user.
-3. Once the seed finished, reset `RUN_DB_SEEDERS` to `false` (or delete it) and redeploy again. This prevents the tables from being reseeded on every restart.
+Every feature follows a similar sequence. Services compose other services, repositories, and notifications to keep controllers stupid-simple.
 
-If you ever need to reseed manually without redeploying, exec into the running container and run:
+### Directory cheat sheet
+
+```
+app/
+  Http/Controllers/     # Request entry points
+  Http/Middleware/      # Request guards (logging, throttling…)
+  Http/Requests/        # Validation + typed input
+  Models/               # Eloquent entities & relationships
+  Services/             # Business logic orchestrators
+  Notifications/        # Email & in-app notifications
+  Traits/               # Shared helpers (ApiResponseTrait, BelongsToUserTrait)
+database/
+  migrations/           # Schema history
+  seeders/              # Demo + production seeders
+routes/api.php          # Route definitions
+config/                 # Auth, mail, cors, sanctum, queue, database config
+tests/                  # PHPUnit tests (Feature + Unit)
+```
+
+---
+
+## Data persistence & schema
+
+### Core tables
+
+| Table | Description | Notable columns |
+| --- | --- | --- |
+| `users` | Profiles, auth, fitness metadata | `name`, `email`, `password`, `height`, `weight`, `nutrition_profile` |
+| `workouts` | Training templates & completed sessions | `user_id`, `name`, `is_template`, `completed_at`, `notes` |
+| `workout_exercises` | Pivot storing exercise details per workout | `workout_id`, `exercise_id`, `sets`, `reps`, `weight`, `tempo`, `rest` |
+| `exercises` | Master catalogue (seeded from ProductionSeeder) | `name`, `equipment`, `body_part`, `difficulty`, `video_url` |
+| `goals` | SMART goals with progress tracking | `title`, `target_value`, `unit`, `status`, `progress_percentage`, `deadline` |
+| `goal_histories` | Audit/history of progress updates | `goal_id`, `previous_progress`, `new_progress`, `note` |
+| `calendar_tasks` | Scheduled workouts/challenges/nutrition reminders | `user_id`, `related_type`, `related_id`, `scheduled_for`, `status` |
+| `notifications` | In-app notifications (Laravel notifications table) | `type`, `data`, `read_at` |
+| `password_reset_tokens` | Laravel table for reset tokens | `email`, `token`, `created_at` |
+| `personal_access_tokens` | Sanctum tokens | `tokenable_type`, `tokenable_id`, `name`, `abilities`, `last_used_at` |
+
+Secondary tables cover achievements, streaks, nutrition plans, articles, challenges, etc. The migrations folder documents each field precisely.
+
+### Relationship diagram (simplified)
+
+```
+┌──────────────┐        ┌──────────────┐        ┌────────────────────┐
+│    users     │ 1 ---->│   workouts   │ 1 ---->│ workout_exercises  │
+└──────────────┘        └──────────────┘        └────────────────────┘
+      │                        │                          │
+      ▼                        │                          ▼
+┌──────────────┐               │                ┌─────────────────┐
+│    goals     │               │                │   exercises     │
+└──────────────┘               │                └─────────────────┘
+      │                        |
+      ▼                        ▼
+┌──────────────┐      ┌─────────────────┐      ┌──────────────────┐
+│ notifications│      │ calendar_tasks  │      │ personal_tokens  │
+└──────────────┘      └─────────────────┘      └──────────────────┘
+```
+
+### Data lifecycle highlights
+
+- **Exercices & workouts** are seeded both in dev and production (`ProductionSeeder`).
+- **Goals** record progress snapshots in history tables.
+- **Password reset** tokens are stored in `password_reset_tokens`; direct reset updates hash & remember token.
+- **Notifications** are stored both in DB (for in-app feed) and optionally mailed.
+- **Jobs/events** can queue asynchronous tasks (sending notifications, heavy calculations). Queue driver defaults to the database for simplicity.
+
+---
+
+## External services & integrations
+
+| Integration | Location | Why |
+| --- | --- | --- |
+| Mail (SMTP) | `config/mail.php`, `.env` | Sends password reset links, workout reminders. |
+| Sanctum SPA Auth | `config/sanctum.php`, middleware `EnsureFrontendRequestsAreStateful` | Token-based auth without OAuth complexity. |
+| Logger | `config/logging.php`, `WorkoutApiLogger` middleware | Structured logs for API calls, errors, business events. |
+| Cache | `config/cache.php` (defaults to file) | Services like `StatisticsService` can cache heavy results. |
+| Render / Docker | `Dockerfile`, `Procfile`, `fly.toml` | Production deployment on Render + optional Fly.io config. |
+| Neon (PostgreSQL) | `config/database.php` | Managed Postgres for production; local uses SQLite. |
+| Third-party APIs | `NutritionService` (if configured) | Example: integrate with external nutrition data providers. |
+
+---
+
+## Configuration & environment
+
+Create `.env` from `.env.example` and set the following:
+
+```env
+APP_NAME=FitnessPro
+APP_ENV=local
+APP_KEY=base64:...
+APP_DEBUG=true
+APP_URL=http://localhost:8000
+
+FRONTEND_URL=http://localhost:4200
+SANCTUM_STATEFUL_DOMAINS=localhost:4200
+SESSION_DOMAIN=localhost
+
+DB_CONNECTION=sqlite
+DB_DATABASE=./database/database.sqlite
+
+QUEUE_CONNECTION=database
+
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.mailtrap.io
+MAIL_PORT=2525
+MAIL_USERNAME=...
+MAIL_PASSWORD=...
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=no-reply@fitnesspro.app
+MAIL_FROM_NAME="FitnessPro"
+
+RUN_DB_SEEDERS=false
+DB_SEEDER_CLASS=ProductionSeeder
+```
+
+Production overrides (`APP_ENV=production`, `APP_DEBUG=false`, Postgres credentials, proper domains). Remember to set `FRONTEND_URL` to the deployed Angular host so reset links work.
+
+---
+
+## Local development
+
+### Native (PHP locally installed)
+
+```bash
+cd backend
+composer install
+cp .env.example .env
+php artisan key:generate
+
+# SQLite setup
+touch database/database.sqlite
+php artisan migrate
+
+# Optional demo data
+php artisan db:seed
+
+php artisan serve          # http://localhost:8000
+```
+
+### Docker (Laravel Sail style)
+
+1. Install Docker + Docker Compose.
+2. Copy `.env.example` to `.env`, configure DB connection to `pgsql`.
+3. Update `DB_HOST`, `DB_USERNAME`, `DB_PASSWORD` for the Sail containers.
+4. Run `./vendor/bin/sail up` (after `composer install`).
+5. API available at `http://localhost` with Postgres + Redis containers ready.
+
+---
+
+## Database seeding (dev & prod)
+
+### Development helper endpoints
+
+Available only when `APP_ENV=local`. Prefix: `/api/dev-seed`.
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| POST | `/api/dev-seed/portfolio` | Populate demos: users, workouts, exercises, goals, nutrition. |
+| POST | `/api/dev-seed/run-migrations` | Run `php artisan migrate`. |
+| POST | `/api/dev-seed/clear-exercises` | Truncate exercises. |
+| POST | `/api/dev-seed/clear-workouts` | Truncate workouts & pivot rows. |
+
+### Production seeding (Render + Neon)
+
+1. Set env var `RUN_DB_SEEDERS=true` (keep `DB_SEEDER_CLASS=ProductionSeeder`).  
+2. Redeploy; logs show `🌱 Running database seeders using ProductionSeeder...`.  
+3. Reset `RUN_DB_SEEDERS=false` and redeploy to avoid seeding at every boot.
+
+Manual seeding inside the container:
 
 ```bash
 php artisan db:seed --force --no-interaction
 ```
 
-Because the app now defaults to `ProductionSeeder` when `APP_ENV=production`, the command above seeds only the static data that is safe for production.
+When `APP_ENV=production`, this command runs only `ProductionSeeder` (exercises, nutrition, public workout templates). It does not alter user-generated data.
 
 ---
 
-## 4. Schéma de la Base de Données
+## Authentication & security model
 
-Voici une description des tables principales et de leurs relations.
+### Sanctum SPA tokens
 
-### `users`
-Stocke les informations d'identification et de profil des utilisateurs.
+- SPA requests include the `X-XSRF-TOKEN` and Sanctum session cookie.
+- For API tokens (mobile clients), use `personal_access_tokens` with ability scopes.
+- Middleware `auth:sanctum` protects routes; `ValidateWorkoutOwnership` ensures resource ownership.
 
-| Colonne | Type | Description |
-| :--- | :--- | :--- |
-| `id` | `bigint` | Clé primaire. |
-| `name` | `varchar` | Nom complet de l'utilisateur. |
-| `email` | `varchar` | Adresse e-mail unique, utilisée pour la connexion. |
-| `password` | `varchar` | Mot de passe hashé avec Bcrypt. |
+### Password reset flow
 
-### `workouts`
-Contient à la fois les modèles d'entraînement (`templates`) et les sessions effectuées.
+1. User triggers "forgot password" from the Angular login page.  
+2. Frontend calls `POST /api/auth/password/email`.  
+3. `AuthService::sendPasswordResetLink` issues a token, mails `ResetPasswordNotification`.  
+4. Email link points to `${FRONTEND_URL}/reset-password?token=...&email=...`.  
+5. Angular reset component prefills email, locks it, and calls either:  
+   - `POST /api/auth/password/reset` (token path)  
+   - `POST /api/auth/password/direct-reset` (fallback when no token).  
+6. Backend updates the hashed password, regenerates `remember_token`, logs outcome.
 
-| Colonne | Type | Description |
-| :--- | :--- | :--- |
-| `id` | `bigint` | Clé primaire. |
-| `user_id` | `bigint` | **Clé étrangère** vers `users.id`. |
-| `name` | `varchar` | Nom de l'entraînement (ex: "Push Day"). |
-| `is_template` | `boolean` | `true` si c'est un modèle réutilisable, `false` si c'est une session effectuée. |
-| `completed_at`| `timestamp`| Date et heure de la fin de la session (pour les sessions). |
+### Additional protections
 
-### `exercises`
-La bibliothèque de tous les exercices disponibles.
-
-| Colonne | Type | Description |
-| :--- | :--- | :--- |
-| `id` | `bigint` | Clé primaire. |
-| `name` | `varchar` | Nom de l'exercice (ex: "barbell bench press"). |
-| `body_part` | `varchar` | Partie du corps ciblée (ex: "chest"). |
-| `equipment` | `varchar` | Équipement requis (ex: "barbell"). |
-
-### `workout_exercises` (Table Pivot)
-C'est le lien entre un entraînement et ses exercices. C'est ici que la "magie" opère.
-
-| Colonne | Type | Description |
-| :--- | :--- | :--- |
-| `id` | `bigint` | Clé primaire. |
-| `workout_id` | `bigint` | **Clé étrangère** vers `workouts.id`. |
-| `exercise_id`| `bigint` | **Clé étrangère** vers `exercises.id`. |
-| `sets` | `integer` | Nombre de séries à effectuer. |
-| `reps` | `integer` | Nombre de répétitions par série. |
-| `weight` | `decimal` | Poids utilisé pour cet exercice dans cet entraînement. |
-
-**Relation Many-to-Many :** `workouts` ←→ `workout_exercises` ←→ `exercises`
+- Rate limiting via `ThrottleRequests` + custom `WorkoutApiRateLimit` middleware.
+- CORS configured in `config/cors.php` to allow the Angular domain only.
+- Sensitive logs are gated behind `config('app.debug')` to avoid leaking details in production.
+- CSRF protection for SPA is handled by Sanctum’s stateful middleware.
 
 ---
 
-## 5. Structure et Schémas du Backend
+## API contract & error handling
 
-Cette section détaille l'organisation du code et des données.
+### Response structure
 
-### Structure des Dossiers
+```jsonc
+// success
+{
+  "success": true,
+  "data": { ... },      // domain-specific payload
+  "message": "Human readable message"
+}
 
-Le projet suit la structure standard de Laravel, qui est conçue pour la clarté et la maintenabilité.
-
-```
-backend/
-│
-├── app/  (Le cœur de votre application)
-│   ├── Http/Controllers/  (Les contrôleurs)
-│   │   └── WorkoutController.php -> Reçoit la requête HTTP, la valide, et appelle un service.
-│   │
-│   ├── Services/ (La logique métier)
-│   │   └── GoalsService.php -> Contient la logique complexe (ex: calculer la progression d'un objectif).
-│   │
-│   ├── Repositories/ (L'accès aux données)
-│   │   └── GoalRepository.php -> Centralise toutes les requêtes à la base de données pour les objectifs.
-│   │
-│   └── Models/ (La représentation des données)
-│       └── Goal.php -> Objet qui représente une ligne dans la table 'goals'.
-│
-├── database/ (La base de données)
-│   ├── migrations/ -> "Version control" pour votre schéma de base de données.
-│   └── seeders/    -> Fichiers pour peupler la base de données avec des données de test.
-│
-├── routes/ (Les routes de l'API)
-│   └── api.php -> La carte de tous les endpoints de votre API.
-│
-├── config/ (La configuration)
-│   └── cors.php -> Configure quels domaines frontends peuvent accéder à l'API.
-│
-└── tests/ (Les tests automatisés)
-    └── Feature/ -> Tests qui simulent une requête HTTP complète.
-
+// error
+{
+  "success": false,
+  "message": "What went wrong",
+  "errors": {          // optional validation errors keyed by field
+    "email": ["The email field is required."]
+  }
+}
 ```
 
-### Schéma de l'Architecture (Flux de Données)
+- Errors inherit from `ApiResponseTrait` to keep structure consistent.
+- Validation errors return HTTP 422 with field-level messages.
+- Authentication errors return 401/403 with safe messages.
+- Unexpected failures are logged and return 500 with generic `message` (detailed `debug` info only when `APP_DEBUG=true`).
 
-Voici comment une requête traverse l'application, de l'utilisateur à la base de données, et retour.
+### Pagination & filtering
 
-```
-[Requête HTTP du client Angular (ex: POST /api/goals)]
-             |
-             v
-+--------------------------+
-| Route (`routes/api.php`) |
-+--------------------------+
-             | (Dirige vers `GoalController@store`)
-             v
-+----------------------------------------------------+
-| Contrôleur (`app/Http/Controllers/GoalController`) |
-| 1. Valide les données de la requête (titre, etc.)  |
-| 2. Appelle le service `GoalsService`.              |
-+----------------------------------------------------+
-             |
-             v
-+------------------------------------------+
-| Service (`app/Services/GoalsService`)    |
-| 1. Applique la logique métier.           |
-| 2. Appelle le `GoalRepository` pour créer. |
-+------------------------------------------+
-             |
-             v
-+--------------------------------------------------+
-| Repository (`app/Repositories/GoalRepository`)   |
-| 1. Prépare et exécute la requête de création.    |
-|    `Goal::create([...])`                         |
-+--------------------------------------------------+
-             |
-             v
-+--------------------------------------+
-| Modèle (`app/Models/Goal`)           |
-| 1. Eloquent ORM traduit en requête SQL. |
-+--------------------------------------+
-             |
-             v
-+----------------------------------+
-| Base de Données (SQLite / PostgreSQL) |
-| 1. Insère la nouvelle ligne.     |
-+----------------------------------+
-             |
-             v
-[Réponse JSON (201 Created)]
-```
-
-### Schéma de la Base de Données (Relations)
-
-Ce schéma illustre comment les tables principales sont connectées entre elles.
-
-```
-+-----------+      +------------+      +-----------------------+      +-------------+
-|   users   |─-─<--|  workouts  |─-─<--|  workout_exercises  |-->-─--|  exercises  |
-+-----------+ (1)  +------------+ (1)  +-----------------------+ (M)  +-------------+
-| id (PK)   |      | id (PK)    |      | id (PK)               |      | id (PK)     |
-| name      |      | user_id(FK)|      | workout_id (FK)       |      | name        |
-| email     |      | name       |      | exercise_id(FK)       |      | body_part   |
-+-----------+      |is_template |      | sets, reps, weight    |      +-------------+
-     |             +------------+      +-----------------------+
-     |
-     | (1)
-     `─-─<--+-----------+
-             |   goals   |
-             +-----------+
-             | id (PK)   |
-             |user_id(FK)|
-             | title     |
-             +-----------+
-
-Légende:
-(PK) = Primary Key (Clé primaire)
-(FK) = Foreign Key (Clé étrangère)
--─<-- = Relation One-to-Many (Un `user` a plusieurs `workouts`)
--->-─- = Relation Many-to-One (Plusieurs `workout_exercises` pointent vers un `exercise`)
-```
-
-## 6. Configuration Essentielle (`.env`)
-
-## 5. Endpoints de l'API
-
-## 5. Endpoints de l'API
-
-Voici une sélection des endpoints les plus importants. Toutes les requêtes et réponses sont en JSON.
-
-### Authentification (`/api/auth`)
-
-**`POST /api/auth/register`** : Crée un nouvel utilisateur.
-- **Requête** : `{ "name": "John Doe", "email": "john@doe.com", "password": "password", "password_confirmation": "password" }`
-- **Réponse (201)** : `{ "success": true, "data": { "user": {...}, "token": "..." } }`
-
-**`POST /api/auth/login`** : Connecte un utilisateur.
-- **Requête** : `{ "email": "john@doe.com", "password": "password" }`
-- **Réponse (200)** : `{ "success": true, "data": { "user": {...}, "token": "..." } }`
-
-**`GET /api/auth/me`** : (Authentification requise) Retourne l'utilisateur actuellement connecté.
-- **Réponse (200)** : `{ "success": true, "data": { "id": 1, "name": "John Doe", ... } }`
-
-**`POST /api/auth/logout`** : (Authentification requise) Déconnecte l'utilisateur en invalidant son token.
-- **Réponse (200)** : `{ "success": true, "message": "Logged out successfully" }`
-
-### Entraînements (`/api/workouts`)
-*(Authentification requise pour tous les endpoints)*
-
-**`GET /api/workouts/templates`** : Liste les modèles d'entraînements de l'utilisateur.
-- **Réponse (200)** : `{ "success": true, "data": [ { "id": 1, "name": "Push Day", ... }, ... ] }`
-
-**`POST /api/workouts/templates`** : Crée un nouveau modèle d'entraînement.
-- **Requête** : `{ "name": "Leg Day", "description": "...", "exercises": [ { "exercise_id": 1, "sets": 4, "reps": 12 }, ... ] }`
-- **Réponse (201)** : `{ "success": true, "data": { "id": 2, "name": "Leg Day", ... } }`
-
-**`GET /api/workouts/logs`** : Liste les sessions d'entraînement effectuées par l'utilisateur.
-- **Réponse (200)** : `{ "success": true, "data": [ { "id": 10, "name": "Push Day Session", "completed_at": "..." }, ... ] }`
-
-### Objectifs (`/api/goals`)
-*(Authentification requise pour tous les endpoints)*
-
-**`GET /api/goals`** : Liste les objectifs de l'utilisateur.
-- **Query Params** : `?status=active` pour filtrer par statut.
-- **Réponse (200)** : `{ "success": true, "data": [ { "id": 1, "title": "Perdre 5kg", "progress_percentage": 40 }, ... ] }`
-
-**`POST /api/goals`** : Crée un nouvel objectif.
-- **Requête** : `{ "title": "Courir un 10km", "target_value": 10, "unit": "km", "target_date": "2025-12-31" }`
-- **Réponse (201)** : `{ "success": true, "data": { "id": 2, "title": "Courir un 10km", ... } }`
+- Most list endpoints use Laravel’s paginator: `data`, `meta`, `links`.  
+- Filters accepted via query parameters (e.g. `GET /api/goals?status=active`).  
+- Sorters are validated via FormRequests to prevent SQL injection.
 
 ---
 
-## 6. Outils de Développement
+## Logging, monitoring, background jobs
 
-Le projet inclut des routes spéciales pour peupler et réinitialiser la base de données en développement.
+| Area | Implementation | Notes |
+| --- | --- | --- |
+| HTTP logs | `WorkoutApiLogger` middleware, Laravel channel `stack` | Logs method, URI, execution time, user ID. |
+| Business events | Services log major state changes (goal status, password resets). |
+| Error tracking | Logged to `storage/logs/laravel.log`; integrate with Sentry/Bugsnag if desired. |
+| Queues | Default `database` queue; jobs stored in `jobs` table. Change to Redis/SQS for scale. |
+| Scheduler | `app/Console/Kernel.php` can schedule commands (e.g., nightly summaries). |
+| Notifications | Use mail + database channels; queue heavy emails to avoid delaying responses. |
 
-⚠️ **Ces routes ne sont actives que si `APP_ENV=local` dans votre `.env`. Elles sont inaccessibles en production.**
-
-Toutes les routes de développement sont préfixées par `/api/dev-seed`.
-
-| Méthode | Endpoint | Description |
-| :--- | :--- | :--- |
-| `POST` | `/api/dev-seed/portfolio` | **Le plus utile.** Peuple la base de données avec un jeu complet de données de démonstration (exercices, utilisateurs, objectifs). |
-| `POST` | `/api/dev-seed/run-migrations` | Exécute les migrations de la base de données (`php artisan migrate`). |
-| `POST` | `/api/dev-seed/clear-exercises` | Vide la table `exercises`. |
-| `POST` | `/api/dev-seed/clear-workouts` | Vide la table `workouts`. |
-
-**Exemple d'utilisation avec `curl`:**
-```bash
-curl -X POST http://localhost:8000/api/dev-seed/portfolio
-```
+To tail logs locally: `tail -f storage/logs/laravel.log`. In production (Render), view logs in the dashboard or attach external logging (Papertrail, Datadog). 
 
 ---
 
-## 7. Tests
-
-Le projet utilise PHPUnit pour les tests automatisés. Les tests sont essentiels pour garantir la stabilité du code après chaque modification.
+## Testing & quality gates
 
 ```bash
-# Lancer toute la suite de tests
+# entire suite
 php artisan test
 
-# Lancer un fichier de test spécifique
-php artisan test tests/Feature/AuthTest.php
+# specific feature
+php artisan test tests/Feature/Auth/PasswordResetTest.php
+
+# filtering by test case
+php artisan test --filter=GoalsServiceTest
 ```
+
+Recommended tooling:
+
+- **PHPUnit** – integrated framework tests.  
+- **Larastan / PHPStan** – static analysis (`./vendor/bin/phpstan analyse`).  
+- **Laravel Pint** – code style fixes (`./vendor/bin/pint`).  
+- **Pest** (optional) – alternative testing syntax if preferred.  
+- **CI** – run tests + analysis on every PR before deploy.
+
+Test philosophy:
+
+- Controllers are smoke-tested (status codes, contracts).  
+- Services have unit tests for business rules (goal completion, streak logic).  
+- Repositories can be tested with in-memory SQLite.  
+- Notifications can be asserted with Laravel’s `Notification::fake()`.  
+- Seeders tested via snapshot tests to ensure catalogue integrity.
+
+---
+
+## Contribution workflow
+
+1. Create a branch from `main`.  
+2. Run `composer test` (or `php artisan test`) before committing.  
+3. Update seeders/tests/docs if behaviour changes.  
+4. Follow PSR-12 / Laravel Pint formatting.  
+5. Submit PR with summary + testing evidence.  
+6. Code review ensures services stay thin and controllers remain logic-free.  
+7. Merge once CI passes and review approvals are complete.  
+
+Tips:
+
+- New endpoints should validate input via FormRequests, call services, and use `ApiResponseTrait`.  
+- When adding tables, include migration, model, factory, seeder (if needed) and tests.  
+- Update both README (EN/FR) when architecture or processes change.  
+- Consider writing docs/diagram updates (Mermaid, ASCII) to keep onboarding easy.  
+
+---
+
+## Troubleshooting
+
+| Symptom | Possible cause | Fix |
+| --- | --- | --- |
+| Password reset link opens Angular without token | `FRONTEND_URL` misconfigured or encoded incorrectly | Check `.env`, ensure URL matches deployed front (no trailing slash). |
+| Password reset fails with “invalid token” | Token expired (default 60 minutes) or user changed email | Re-run `password/email` endpoint; ensure queues/mail are working. |
+| SPA requests return 401 | Sanctum domains not configured | Set `SANCTUM_STATEFUL_DOMAINS`, `SESSION_DOMAIN`, clear cookies. |
+| Mail not delivered | SMTP credentials wrong or port blocked | Verify `.env`, test with `php artisan tinker` sending a notification. |
+| Seeds rerun on every deploy | `RUN_DB_SEEDERS` left to `true` | Reset env var to `false` after the first run. |
+| Storage permission errors | Filesystem read-only | Ensure `storage/` and `bootstrap/cache` are writable. |
+| Queue jobs stay pending | Queue worker not running | Start worker (`php artisan queue:work`) or check scheduler on production platform. |
+| JSON errors missing details in prod | `APP_DEBUG=false` hides stack traces | Inspect logs (`storage/logs/laravel.log`) or use remote logging. |
+
+---
+
+## Need more references?
+
+- Laravel official docs – https://laravel.com/docs  
+- Laravel Sanctum – https://laravel.com/docs/sanctum  
+- PostgreSQL docs – https://www.postgresql.org/docs/  
+- Frontend (Angular) docs – `../frontend/README.md`  
+- Diagram tooling – https://mermaid.js.org, https://asciiflow.com  
+
+Happy shipping! 🚀
