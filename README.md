@@ -2,8 +2,6 @@
 
 Backend API built with Laravel 12 that powers the FitnessPro platform (Angular SPA). This document is designed as a **guided tour** of the codebase: why technologies were selected, how requests flow, how data is persisted, and how to extend or operate the stack safely.
 
-> Looking for the French version? See `READMEFR.md` in the same folder.
-
 ---
 
 ## 📚 Table of contents
@@ -450,12 +448,3 @@ Tips:
 
 ---
 
-## Need more references?
-
-- Laravel official docs – https://laravel.com/docs  
-- Laravel Sanctum – https://laravel.com/docs/sanctum  
-- PostgreSQL docs – https://www.postgresql.org/docs/  
-- Frontend (Angular) docs – `../frontend/README.md`  
-- Diagram tooling – https://mermaid.js.org, https://asciiflow.com  
-
-Happy shipping! 🚀
