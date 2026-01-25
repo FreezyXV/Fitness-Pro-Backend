@@ -13,7 +13,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #667eea;
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -27,7 +27,7 @@
             background: rgba(255, 255, 255, 0.1);
             border-radius: 20px;
             backdrop-filter: blur(10px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.25);
             max-width: 600px;
             margin: 2rem;
         }
@@ -36,10 +36,7 @@
             font-size: 3rem;
             font-weight: bold;
             margin-bottom: 1rem;
-            background: linear-gradient(45deg, #ffffff, #e0e7ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: #ffffff;
         }
 
         .message {
@@ -57,8 +54,8 @@
             margin-top: 2rem;
             padding: 1.5rem;
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            border-left: 4px solid #fbbf24;
+            border-radius: 3rem;
+            border-left: 3rem solid #fbbf24;
         }
 
         .api-info h3 {
