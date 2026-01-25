@@ -393,4 +393,57 @@ class AuthService
             throw $e;
         }
     }
+
+    /**
+     * Login as guest user
+     */
+    public function loginAsGuest(): array
+    {
+        try {
+            Log::info('AuthService: Guest login attempt');
+
+            // Generate unique guest identifier
+            $guestId = 'guest_' . now()->timestamp . '_' . Str::random(8);
+            $guestEmail = $guestId . '@guest.fitnesspro.local';
+
+            // Create or find guest user
+            $user = User::firstOrCreate(
+                ['email' => $guestEmail],
+                [
+                    'name' => 'Guest User',
+                    'first_name' => 'guest',
+                    'last_name' => 'user',
+                    'email' => $guestEmail,
+                    'password' => Hash::make(Str::random(32)), // Random password
+                    'email_verified_at' => now(),
+                ]
+            );
+
+            // Revoke previous tokens for this guest (if any)
+            $user->tokens()->delete();
+
+            // Generate tokens with shorter expiration for guests (4 hours)
+            $tokenName = 'GuestMode_' . now()->timestamp;
+            $expirationMinutes = 240; // 4 hours
+            $accessToken = $user->createToken($tokenName, ['*'], now()->addMinutes($expirationMinutes))->plainTextToken;
+
+            Log::info('AuthService: Guest login successful', [
+                'user_id' => $user->id,
+                'email' => $user->email
+            ]);
+
+            return [
+                'user' => $user->fresh(),
+                'token' => $accessToken,
+                'is_guest' => true,
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('AuthService: Guest login failed', [
+                'error' => $e->getMessage()
+            ]);
+
+            throw $e;
+        }
+    }
 }

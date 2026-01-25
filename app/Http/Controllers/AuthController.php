@@ -287,4 +287,36 @@ class AuthController extends BaseController
             );
         }
     }
+
+    /**
+     * Login as guest
+     */
+    public function guestLogin(): JsonResponse
+    {
+        try {
+            Log::info('AuthController: Guest login request');
+
+            $authResult = $this->authService->loginAsGuest();
+
+            $response = [
+                'user' => $authResult['user'],
+                'token' => $authResult['token'],
+                'token_type' => 'Bearer',
+                'is_guest' => true,
+            ];
+
+            return $this->successResponse($response, 'Guest login successful');
+
+        } catch (\Exception $e) {
+            Log::error('AuthController: Guest login failed', [
+                'error' => $e->getMessage()
+            ]);
+
+            return $this->errorResponse(
+                'Guest login failed',
+                500,
+                config('app.debug') ? $e->getMessage() : null
+            );
+        }
+    }
 }

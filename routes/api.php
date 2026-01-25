@@ -222,7 +222,8 @@ Route::prefix('auth')->name('api.auth.')->group(function () {
     // ROUTES PUBLIQUES - CORRESPONDANCE FRONTEND
     Route::post('login', [AuthController::class, 'login'])->name('login');
     Route::post('register', [AuthController::class, 'register'])->name('register');
-    
+    Route::post('guest-login', [AuthController::class, 'guestLogin'])->name('guest-login');
+
     // Password reset endpoints
     Route::post('password/email', [AuthController::class, 'sendResetLinkEmail'])->name('password.email');
     Route::post('password/reset', [AuthController::class, 'resetPassword'])->name('password.reset');
