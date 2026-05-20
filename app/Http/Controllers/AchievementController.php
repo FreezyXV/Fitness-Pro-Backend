@@ -15,11 +15,17 @@ class AchievementController extends BaseController
             $user = $this->getAuthenticatedUser();
             
             $achievements = Achievement::active()->ordered()->get();
-            
-            $achievementsWithProgress = $achievements->map(function($achievement) use ($user) {
-                $userHasAchievement = $user->achievements()->where('achievement_id', $achievement->id)->first();
+
+            // Load all user achievements in one query to avoid N+1
+            $userAchievements = $user->achievements()
+                ->withPivot(['unlocked_at', 'points_earned'])
+                ->get()
+                ->keyBy('id');
+
+            $achievementsWithProgress = $achievements->map(function($achievement) use ($user, $userAchievements) {
+                $userHasAchievement = $userAchievements->get($achievement->id);
                 $progress = $achievement->getUserProgress($user);
-                
+
                 return array_merge($achievement->toArray(), [
                     'unlocked' => (bool) $userHasAchievement,
                     'unlocked_at' => $userHasAchievement?->pivot?->unlocked_at,

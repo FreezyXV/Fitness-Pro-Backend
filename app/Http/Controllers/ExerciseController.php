@@ -338,13 +338,17 @@ class ExerciseController extends BaseController
                 'flexibility' => 'Flexibilité'
             ];
 
+            $counts = Exercise::selectRaw('body_part, COUNT(*) as count')
+                ->whereNotNull('body_part')
+                ->groupBy('body_part')
+                ->pluck('count', 'body_part');
+
             $result = [];
             foreach ($bodyParts as $bodyPart) {
-                $count = Exercise::where('body_part', $bodyPart)->count();
                 $result[] = [
                     'value' => $bodyPart,
                     'label' => $labels[$bodyPart] ?? ucfirst($bodyPart),
-                    'count' => $count
+                    'count' => $counts[$bodyPart] ?? 0
                 ];
             }
 
@@ -392,13 +396,17 @@ class ExerciseController extends BaseController
                 'mobility' => 'Mobilité'
             ];
 
+            $counts = Exercise::selectRaw('category, COUNT(*) as count')
+                ->whereNotNull('category')
+                ->groupBy('category')
+                ->pluck('count', 'category');
+
             $result = [];
             foreach ($categories as $category) {
-                $count = Exercise::where('category', $category)->count();
                 $result[] = [
                     'value' => $category,
                     'label' => $labels[$category] ?? ucfirst($category),
-                    'count' => $count
+                    'count' => $counts[$category] ?? 0
                 ];
             }
 

@@ -108,6 +108,7 @@ Route::get('/workouts/templates/public', function () {
         \Log::info('Attempting to get public workout templates');
 
         $templates = \App\Models\Workout::orderBy('created_at', 'desc')
+            ->limit(50)
             ->get();
 
         \Log::info('Found templates: ' . $templates->count());
@@ -164,7 +165,7 @@ Route::get('/goals/public', function () {
     try {
         \Log::info('Attempting to get public goals');
 
-        $goals = \App\Models\Goal::orderBy('created_at', 'desc')->get();
+        $goals = \App\Models\Goal::orderBy('created_at', 'desc')->limit(50)->get();
 
         \Log::info('Found goals: ' . $goals->count());
 
